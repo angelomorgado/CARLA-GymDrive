@@ -1,0 +1,40 @@
+{
+  "id": "vehicle.tesla.model3",
+  "weather_conditions":
+  {
+    "dry": 
+    {
+      "vehicle": {
+        "mass": 1845.0,
+        "drag_coefficient": 0.15000000596046448
+      },
+      "front_wheels": {
+        "tire_friction": 3.5,
+        "damping_rate": 0.25,
+        "long_stiff_value": 3000.0
+      },
+      "rear_wheels": {
+        "tire_friction": 3.5,
+        "damping_rate": 0.25,
+        "long_stiff_value": 3000.0
+      }
+    },
+    "wet": 
+    {
+      "vehicle": {
+        "mass": 1900.0,
+        "drag_coefficient": 0.2
+      },
+      "front_wheels": {
+        "tire_friction": 2.5,
+        "damping_rate": 0.2,
+        "long_stiff_value": 2500.0
+      },
+      "rear_wheels": {
+        "tire_friction": 2.5,
+        "damping_rate": 0.2,
+        "long_stiff_value": 2500.0
+      }
+    }
+  }
+}

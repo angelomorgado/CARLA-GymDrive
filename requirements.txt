@@ -1,0 +1,9 @@
+carla
+gymnasium
+numpy
+opencv_python
+Pillow
+pygame
+pynput
+stable_baselines3
+torch

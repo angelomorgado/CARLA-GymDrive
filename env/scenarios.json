@@ -1,0 +1,152 @@
+{
+  "Town01-ClearNoon-Road-0": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 312.3, "y": 195.3, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
+		"target_position": {"x": 128.2, "y": 195.3, "z": 0.3},
+    "target_gnss": {"lat": -0.001754, "lon": 0.001143, "alt": 0},
+    "traffic_density": "None",
+    "situation": "Road"
+  },
+  "Town01-WetNight-Road-0": {
+    "map_name": "Town01",
+    "weather_condition": "Wet Night",
+    "initial_position": {"x": 312.3, "y": 195.3, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
+		"target_position": {"x": 128.2, "y": 195.3, "z": 0.3},
+    "target_gnss": {"lat": -0.001754, "lon": 0.001143, "alt": 0},
+    "traffic_density": "Low",
+    "situation": "Road"
+  },
+  "Town01-ClearNoon-Road-1": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 65.0, "y": -2.2, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
+    "target_position": {"x": -2.1, "y": 30.9, "z": 0.3},
+    "target_gnss": {"lat": -0.000286, "lon": -0.000019, "alt": 0},
+    "traffic_density": "High",
+    "situation": "Road"
+  },
+  "Town01-ClearNoon-Road-2": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 2.1, "y": 39.2, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": -90.0, "roll": 0.0},
+    "target_position": {"x": 37.7, "y": 2.1, "z": 0.3},
+    "target_gnss": {"lat": -0.000019, "lon": 0.000348, "alt": 0},
+    "traffic_density": "None",
+    "situation": "Road"
+  },
+  "Town01-ClearNoon-Road-3": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": -2.1, "y": 36.9, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 90.0, "roll": 0.0},
+    "target_position": {"x": -2.1, "y": 237.3, "z": 0.3},
+    "target_gnss": {"lat": -0.002141, "lon": -0.000019, "alt": 0},
+    "traffic_density": "High",
+    "situation": "Road"
+  },
+  "Town01-ClearNoon-Junction-0": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 51.4, "y": 330.8, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
+    "target_position": {"x": 128.1, "y": 330.8, "z": 0.3},
+    "target_gnss": {"lat": -0.002972, "lon": 0.001160, "alt": 0},
+    "traffic_density": "Low",
+    "situation": "Junction"
+  },
+  "Town01-ClearNoon-Junction-1": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 51.4, "y": 330.8, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
+    "target_position": {"x": 92.6, "y": 302.1, "z": 0.3},
+    "target_gnss": {"lat": -0.002705, "lon": 0.000832, "alt": 0},
+    "traffic_density": "High",
+    "situation": "Junction"
+  },
+  "Town01-ClearNoon-Junction-2": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 92.5, "y": 168.5, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": -90.0, "roll": 0.0},
+    "target_position": {"x": 92.3, "y": 103.7, "z": 0.3},
+    "target_gnss": {"lat": -0.000923, "lon": 0.000829, "alt": 0},
+    "traffic_density": "None",
+    "situation": "Junction"
+  },
+  "Town01-ClearNoon-Junction-3": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 92.5, "y": 168.5, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": -90.0, "roll": 0.0},
+    "target_position": {"x": 119.2, "y": 133.6, "z": 0.3},
+    "target_gnss": {"lat": -0.001200, "lon": 0.001080, "alt": 0},
+    "traffic_density": "High",
+    "situation": "Junction"
+  },
+  "Town10HD-ClearNoon-Road-0": {
+    "map_name": "Town10HD",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 59.5, "y": 130.5, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
+    "target_position": {"x": -15.3, "y": 129.9, "z": 0.3},
+    "target_gnss": {"lat": -0.001167, "lon": -0.000146, "alt": 0},
+    "traffic_density": "Low",
+    "situation": "Junction"
+  },
+  "Town10HD-ClearNoon-Road-1": {
+    "map_name": "Town10HD",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": -22.3, "y": -57.7, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
+    "target_position": {"x": 99.3, "y": -24.1, "z": 0.3},
+    "target_gnss": {"lat": 0.000208, "lon": 0.000893, "alt": 0},
+    "traffic_density": "High",
+    "situation": "Road"
+  },
+  "Town10HD-ClearNoon-Junction-0": {
+    "map_name": "Town10HD",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 99.4, "y": -19.2, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 90.0, "roll": 0.0},
+    "target_position": {"x": 99.4, "y": 49.3, "z": 0.3},
+    "target_gnss": {"lat": -0.000452, "lon": 0.000891, "alt": 0},
+    "traffic_density": "None",
+    "situation": "Junction"
+  },
+  "Town10HD-ClearNoon-Junction-1": {
+    "map_name": "Town10HD",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 99.4, "y": -19.2, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 90.0, "roll": 0.0},
+    "target_position": {"x": 70.6, "y": 13.4, "z": 0.3},
+    "target_gnss": {"lat": -0.000120, "lon": 0.000626, "alt": 0},
+    "traffic_density": "Low",
+    "situation": "Junction"
+  },
+  "Town10HD-ClearNoon-Junction-2": {
+    "map_name": "Town10HD",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": -4.8, "y": 69.8, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
+    "target_position": {"x": 74.5, "y": 70.0, "z": 0.3},
+    "target_gnss": {"lat": -0.000628, "lon": 0.000678, "alt": 0},
+    "traffic_density": "Low",
+    "situation": "Junction"
+  },
+  "Town10HD-ClearNoon-Junction-3": {
+    "map_name": "Town10HD",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 40.3, "y": 40.3, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 90.0, "roll": 0.0},
+    "target_position": {"x": 74.5, "y": 70.0, "z": 0.3},
+    "target_gnss": {"lat": -0.000628, "lon": 0.000678, "alt": 0},
+    "traffic_density": "None",
+    "situation": "Junction"
+  }
+}
