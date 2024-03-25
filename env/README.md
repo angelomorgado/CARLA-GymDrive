@@ -16,17 +16,9 @@ The tool is a gym.Env wrap. This means that you can use this environment as a gy
 4. (Optional) Run the CARLA server (It is not recommended to launch the server in low-quality mode as it can cause crashes). If you want the server to start and close automatically you can use the flag `initialize_server=True` when instaciating the environment.
 5. Run the client script (e.g., train or test script).
 
-## TODO
-
-- [ ] Put the reward functions in their own file for easier customization.
-- [ ] Put the observation space and action space in their own file for easier customization.
-- [ ] Make code more clean and consistent (better organization).
-- [ ] Add more training parameters.
-
 ## Known Issues
 
 - If the simulator is ran in low quality mode, it crashes the program, this is a problem in Carla's side and it's known by the community;
-- If the first episode's map is the same as the simulators map, it loads everything so quickly that the sensors' threads don't send the sensors' data quick enough and the program crashes (I'll try to fix this ASAP (Also if you have ideas on how to fix it be sure to contact me.));
 - Moving the walkers causes segmentation fault. This is a known problem between the community.
 - Simply spawning the walkers might cause the program to crash. This is maybe due to my personal computer's performance. I haven't tested it in a more powerfull pc. I don't think it is a coding problem, but i might be wrong.
 

@@ -1,42 +1,20 @@
-# CARLA Ultimate Template
+# CARLA GymDrive
 
-This project acts as a template for the Carla Simulator. It is a collection of various features and functionalities that can be used to create a custom environment for the Carla Simulator. More features will be added as the project progresses.
-This project can be seen as an engine of sorts, and acts as a starting point for creating various scenarios for the Carla Simulator with relative ease as all the necessary components are already in place.
+Carla GymDrive is a powerful framework designed to facilitate reinforcement learning experiments in autonomous driving using the Carla simulator. By providing a gymnasium-like environment, it offers an intuitive and efficient platform for training driving agents using reinforcement learning techniques.
 
-All the modules are designed to be as modular as possible, so that they can be easily integrated into other projects and they are organized in classes and functions.
+## Environment Features
 
-```
-I'll make a proper documentation and README once the project is finished.
-```
+### Seamless Integration and Easy Customization
 
----
+Carla GymDrive seamlessly integrates with the Carla simulator, allowing users to leverage its extensive features for creating realistic driving scenarios. It also provides an easy to customize environment for fine-tuning the simulation parameters to the user's needs.
 
-## Installation and Usage
+### Reinforcement Learning Ready
 
-1. It is recommended to use a virtual environment with python 3.8.
- - If you wish to use the same virtual environment as me which used Carla 0.9.15, install conda and run `conda env create -f environment.yml`
- - If you wish to use a different version of Carla, you can create a new environment with `conda create -n carla python=3.8` and then install the requirements with `pip install -r requirements.txt`
-3. Setup the environment variable `CARLA_SERVER` to the path of the Carla server directory.
-4. Run the Carla server:
- - If the script automatically starts the server, you can skip this step. Make sure to set the environment variable `CARLA_SERVER` to the path of the Carla server directory.
- - If the script does not automatically start the server, you need to start the server manually.
-5. Run any scripts
+With built-in compatibility for reinforcement learning libraries such as Stable Baselines3, Carla GymDrive streamlines the process of training autonomous driving agents.
 
----
+### Modular Design
 
-## Modules
-
-This template's modules are located and documented in the `src` directory. Their documentation can be found [here](src/README.md)
-
----
-
-## Features
-
-### Gymnasium Environment
-
-Using this template, a gymnasium wrapper was created for the Carla simulator. This allows the training of autonomous driving agents using reinforcement learning algorithms. By wrapping the Carla simulator in a gym environment, it is possible to use libraries such as Stable Baselines to train agents.
-
-More about this tool can be found in [its documentation](env/README.md)
+The framework is built with a modular design approach, enabling easy customization and integration into various projects and workflows.
 
 ### Custom Vehicular Sensory
 
@@ -53,3 +31,43 @@ Vehicles have their physics changed according to the weather. This template allo
 ### Complete Simulation Control and Management Using Minimal Code
 
 The template allows for the complete control and management of the Carla simulator using minimal code. This is achieved through the use of the `World` class. This class allows for the easy management of the Carla simulator, such as changing the map, the weather, and even spawning traffic and pedestrians.
+
+---
+
+## Installation and Usage
+
+1. It is recommended to use a virtual environment with python 3.8.
+
+ - If you wish to use the same virtual environment as me which used Carla 0.9.15, install conda and run `conda env create -f environment.yml`
+ - If you wish to use a different version of Carla, you can create a new environment with `conda create -n carla python=3.8` and then install the requirements with `pip install -r requirements.txt`
+
+3. Setup the environment variable `CARLA_SERVER` to the path of the Carla server directory.
+
+4. Run the Carla server:
+
+ - If the script automatically starts the server, you can skip this step. Make sure to set the environment variable `CARLA_SERVER` to the path of the Carla server directory.
+ - If the script does not automatically start the server, you need to start the server manually.
+
+5. Run training/testing scripts
+
+---
+
+## Episode Generation
+
+For a more extensive documentation on how to generate episodes, please refer to the [Environment](env/README.md) documentation.
+
+---
+
+## Modules
+
+This template's modules are located and documented in the `src` directory. Their documentation can be found [here](src/README.md)
+
+---
+
+## License
+
+Carla GymDrive is licensed under the MIT License. See the [LICENSE](/LICENSE) file for details.
+
+## Acknowledgements
+
+Carla GymDrive is inspired by the open-source community and contributions from researchers and developers around the world. We would like to express our gratitude to the Carla team for providing an excellent simulator for autonomous driving research.

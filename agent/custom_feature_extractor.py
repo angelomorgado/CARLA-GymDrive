@@ -1,3 +1,7 @@
+'''
+This script is used to make a custom feature extractor for the stable-baselines3 model.
+'''
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

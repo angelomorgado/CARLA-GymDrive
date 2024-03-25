@@ -1,10 +1,5 @@
 '''
-Main window:
-    It acts as the center of the entire program controlling the entire process.
-    This depends on the project at hand.
-    Various examples of mains that act as tutorials can be found in the examples folder.
-
-    It is possible to call specific scenarios by having a list of them e.g, l = ["Town01-ClearNoon-Road-0", "Town01-WetNight-Road-0"] and then calling them in the reset method as such: env.reset(l[i])
+This script is used to show how to use the environment by running a few episodes or steps.
 '''
 
 import time
@@ -12,7 +7,7 @@ from env.environment import CarlaEnv
 import gymnasium as gym
 
 def steps_main():
-    # env = CarlaEnv('carla-rl-gym', time_limit=60, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True)
+    # env = CarlaEnv('carla-rl-gym-v0', time_limit=300, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
     env = gym.make('carla-rl-gym-v0', time_limit=300, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
     obs, info = env.reset()
     
@@ -28,7 +23,7 @@ def steps_main():
     env.close()
 
 def episodes_main():
-    # env = CarlaEnv(time_limit=50, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=True, show_sensor_data=True)
+    # env = CarlaEnv('carla-rl-gym-v0', time_limit=10, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
     env = gym.make('carla-rl-gym-v0', time_limit=10, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
 
     # Number of episodes
