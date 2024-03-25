@@ -21,6 +21,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         # Initialize the PointNet features extractor for lidar data
         if "lidar_data" in observation_space.spaces:
             self.lidar_pointfeat = PointNetfeat()
+            self.lidar_pointfeat.train()
             total_concat_size += 1024  # Assuming PointNetfeat outputs a 1024-dimensional feature vector
 
         # Add more extractors for other observation types if needed
