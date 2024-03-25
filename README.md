@@ -2,7 +2,7 @@
 
 Carla GymDrive is a powerful framework designed to facilitate reinforcement learning experiments in autonomous driving using the Carla simulator. By providing a gymnasium-like environment, it offers an intuitive and efficient platform for training driving agents using reinforcement learning techniques.
 
-## Environment Features
+## Features
 
 ### Seamless Integration and Easy Customization
 
@@ -18,7 +18,7 @@ The framework is built with a modular design approach, enabling easy customizati
 
 ### Custom Vehicular Sensory
 
-By leveraging json files, it is possible to create various builds of vehicles with different sensors and configurations. This allows for the creation of custom vehicles with different sensor configurations. Such example of a build can be found in the `test_sensors.json` file.
+By leveraging json files, it is possible to create various builds of vehicles with different sensors and configurations. This allows for the creation of custom vehicles with different sensor configurations. Such example of a build can be found in the [./env/train_sensors.json](./env/train_sensors.json) file.
 
 ### Sensor Visualization
 
@@ -26,7 +26,7 @@ Through Pygame, it is possible to visualize the sensor data in real-time. This i
 
 ### Vehicle Physics Customization
 
-Vehicles have their physics changed according to the weather. This template allows for the customization of a vehicle's physics based on the weather conditions. This is useful for simulating the effects of weather on a vehicle's performance. This can be achieved through JSON files. One such example can be found in the `test_vehicle_physics.json` file.
+Vehicles have their physics changed according to the weather. This template allows for the customization of a vehicle's physics based on the weather conditions. This is useful for simulating the effects of weather on a vehicle's performance. This can be achieved through JSON files. One such example can be found in the [./env/default_vehicle_physics.json](./env/default_vehicle_physics.json) file.
 
 ### Complete Simulation Control and Management Using Minimal Code
 
