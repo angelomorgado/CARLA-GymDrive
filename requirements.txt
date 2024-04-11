@@ -8,3 +8,5 @@ pynput
 stable_baselines3
 torch
 tensorboard
+tqdm
+rich

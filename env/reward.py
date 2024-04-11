@@ -145,7 +145,7 @@ def __get_time_limit_reward(time_limit_reached):
 
 def __get_time_driving_reward(vehicle):
     global terminated
-    return 1 if not terminated and vehicle.get_speed() > 1.0 else 0
+    return 1 if not terminated and vehicle.get_speed() > 2.0 else 0
 
 # ==================================== Helper Functions ================================================================
 # This function is used to correct the yaw angle to be between 0 and 360 degrees
