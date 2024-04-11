@@ -10,6 +10,23 @@ has_stopped = False
 
 # ======================================== Main Reward Function ==========================================================
 # If you change this function's signature, you must change the signature of the function in the environment.py file!!
+# def calculate_reward(vehicle: Vehicle, world: World, map: carla.Map, scenario_dict, num_steps: int, time_limit_reached: bool) -> float:
+#     global terminated
+#     vehicle_location = vehicle.get_location()
+#     waypoint = map.get_waypoint(vehicle_location, project_to_road=True, lane_type=carla.LaneType.Driving)
+#     reward_lambdas = config.ENV_REWARDS_LAMBDAS
+#     terminated = False
+    
+#     return reward_lambdas['orientation'] * __get_orientation_reward(waypoint, vehicle) + \
+#            reward_lambdas['distance'] * __get_distance_reward(waypoint, vehicle_location) + \
+#            reward_lambdas['speed'] * __get_speed_reward(vehicle) + \
+#            reward_lambdas['destination'] * __get_destination_reward(vehicle_location, scenario_dict, num_steps) + \
+#            reward_lambdas['collision'] * __get_collision_reward(vehicle) + \
+#            reward_lambdas['light_pole_transgression'] * __get_light_pole_trangression_reward(map, vehicle, world) + \
+#            reward_lambdas['stop_sign_transgression'] * __get_stop_sign_reward(vehicle, map) + \
+#            reward_lambdas['time_limit'] * __get_time_limit_reward(time_limit_reached) + \
+#            reward_lambdas['time_driving'] * __get_time_driving_reward(vehicle), terminated
+
 def calculate_reward(vehicle: Vehicle, world: World, map: carla.Map, scenario_dict, num_steps: int, time_limit_reached: bool) -> float:
     global terminated
     vehicle_location = vehicle.get_location()
@@ -18,13 +35,8 @@ def calculate_reward(vehicle: Vehicle, world: World, map: carla.Map, scenario_di
     terminated = False
     
     return reward_lambdas['orientation'] * __get_orientation_reward(waypoint, vehicle) + \
-           reward_lambdas['distance'] * __get_distance_reward(waypoint, vehicle_location) + \
            reward_lambdas['speed'] * __get_speed_reward(vehicle) + \
-           reward_lambdas['destination'] * __get_destination_reward(vehicle_location, scenario_dict, num_steps) + \
            reward_lambdas['collision'] * __get_collision_reward(vehicle) + \
-           reward_lambdas['light_pole_transgression'] * __get_light_pole_trangression_reward(map, vehicle, world) + \
-           reward_lambdas['stop_sign_transgression'] * __get_stop_sign_reward(vehicle, map) + \
-           reward_lambdas['time_limit'] * __get_time_limit_reward(time_limit_reached) + \
            reward_lambdas['time_driving'] * __get_time_driving_reward(vehicle), terminated
 
 # ============================================= Reward Functions ==========================================================

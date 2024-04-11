@@ -9,24 +9,8 @@ from matplotlib import pyplot as plt
 
 from agent.custom_feature_extractor import CustomCombinedExtractor
 
-def plot_graph(episodes, rewards, losses):
-    # Make a plot with two lines on the same figure and the y axis has two sets of values
-    fig, ax1 = plt.subplots()
-    ax1.set_xlabel('Episodes')
-    ax1.set_ylabel('Rewards', color='tab:blue')
-    ax1.plot(episodes, rewards, color='tab:blue')
-    ax1.tick_params(axis='y', labelcolor='tab:blue')
-    
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('Loss', color='tab:red')
-    ax2.plot(episodes, losses, color='tab:red')
-    ax2.tick_params(axis='y', labelcolor='tab:red')
-    
-    fig.tight_layout()
-    plt.savefig(f'agent/plots/dqn_{len(episodes)}_loss_reward.png')
-
 def main():
-    env = gym.make('carla-rl-gym-v0', time_limit=50, initialize_server=False, random_weather=False, synchronous_mode=True, continuous=True, show_sensor_data=True)
+    env = gym.make('carla-rl-gym-v0', time_limit=50, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=True, show_sensor_data=True, has_traffic=False)
     
     policy_kwargs = dict(
         features_extractor_class=CustomCombinedExtractor,
@@ -40,14 +24,15 @@ def main():
         batch_size=64,
         n_epochs=4,
         gamma=0.999,
+        tensorboard_log="./ppo_av_tensorboard/",
         gae_lambda=0.98,
         ent_coef=0.01,
         verbose=1,
     )
-
-    model.learn(total_timesteps=int(1000))
-
-    model.save("ppo_test-agent")
+    
+    for i in range(10):
+        model.learn(total_timesteps=int(100))
+        model.save("checkpoints/sb3_ppo_checkpoint_{}".format(i))
     
     env.close()
 

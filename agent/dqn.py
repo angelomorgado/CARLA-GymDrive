@@ -12,11 +12,11 @@ from torch.optim import Adam
 from env.aux.point_net import PointNetfeat
 
 class DQNAgent:
-    def __init__(self, state_size, action_size, learning_rate=0.001, gamma=0.99, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, plot_graph=True):
+    def __init__(self, state_size, action_size, learning_rate=0.001, gamma=0.99, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, batch_size=32):
         self.state_size = state_size
         self.action_size = action_size
         self.memory = []
-        self.batch_size = 32
+        self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.epsilon = epsilon
@@ -98,43 +98,13 @@ class DQNAgent:
 
         self.last_loss = loss.item()
     
-    # def replay(self):
-    #     if len(self.memory) < self.batch_size:
-    #         return
-        
-    #     minibatch = random.sample(self.memory, self.batch_size)
-    #     states, targets = [], []
-    #     for state, action, reward, next_state, terminated, truncated in minibatch:
-    #         target = reward
-    #         if not terminated and not truncated:
-    #             next_state = torch.FloatTensor(next_state).to(self.device)
-    #             target = reward + self.gamma * torch.max(self.target_model(next_state)).item()
-
-    #         try:
-    #             state = np.array(state)
-    #         except ValueError:
-    #             state = np.array(state[0])
-    #         state = torch.FloatTensor(state).to(self.device)
-    #         q_values = self.model(state)
-    #         q_values[action] = target
-    #         states.append(state)
-    #         targets.append(q_values)
-
-    #     states = torch.stack(states)
-    #     targets = torch.stack(targets)
-
-    #     self.optimizer.zero_grad()
-    #     loss = self.loss_fn(self.model(states), targets)
-    #     loss.backward()
-    #     self.optimizer.step()
-
-    #     if self.epsilon > self.epsilon_min:
-    #         self.epsilon *= self.epsilon_decay
-
-    #     self.last_loss = loss.item()
-
     def update_target_model(self):
         self.target_model.load_state_dict(self.model.state_dict())
+    
+    def train(self, state, action, reward, next_state, terminated, truncated):
+        self.remember(state, action, reward, next_state, terminated, truncated)
+        self.replay()
+        self.update_target_model()
         
     def get_loss(self):
         return self.last_loss  

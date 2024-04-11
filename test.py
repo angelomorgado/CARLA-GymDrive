@@ -48,19 +48,13 @@ for episode in range(num_episodes):
         # Take action
         next_state, reward, terminated, truncated, info = env.step(action)
         
-        # Store experience
-        agent.remember(state, action, reward, next_state, terminated, truncated)
+        # Train the agent
+        agent.train(state, action, reward, next_state, terminated, truncated)
         
         # Update state
         state = next_state
-        
-        # Replay
-        agent.replay()
-        
+    
         episode_losses.append(agent.get_loss())
-        
-        # Update target network
-        agent.update_target_model()
         
         total_reward += reward
         

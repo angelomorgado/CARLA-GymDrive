@@ -1,0 +1,42 @@
+{
+  "Town01-ClearNoon-Road-0": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 312.3, "y": 195.3, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
+		"target_position": {"x": 128.2, "y": 195.3, "z": 0.3},
+    "target_gnss": {"lat": -0.001754, "lon": 0.001143, "alt": 0},
+    "traffic_density": "None",
+    "situation": "Road"
+  },
+  "Town01-ClearNoon-Road-1": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 65.0, "y": -2.2, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
+    "target_position": {"x": -2.1, "y": 30.9, "z": 0.3},
+    "target_gnss": {"lat": -0.000286, "lon": -0.000019, "alt": 0},
+    "traffic_density": "High",
+    "situation": "Road"
+  },
+  "Town01-ClearNoon-Road-2": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": 2.1, "y": 39.2, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": -90.0, "roll": 0.0},
+    "target_position": {"x": 37.7, "y": 2.1, "z": 0.3},
+    "target_gnss": {"lat": -0.000019, "lon": 0.000348, "alt": 0},
+    "traffic_density": "None",
+    "situation": "Road"
+  },
+  "Town01-ClearNoon-Road-3": {
+    "map_name": "Town01",
+    "weather_condition": "Clear Noon",
+    "initial_position": {"x": -2.1, "y": 36.9, "z": 0.3},
+    "initial_rotation": {"pitch": 0.0, "yaw": 90.0, "roll": 0.0},
+    "target_position": {"x": -2.1, "y": 237.3, "z": 0.3},
+    "target_gnss": {"lat": -0.002141, "lon": -0.000019, "alt": 0},
+    "traffic_density": "High",
+    "situation": "Road"
+  }
+}
