@@ -12,7 +12,7 @@ def main():
     # Stable baselines callback
     # Save a checkpoint every 1000 steps
     checkpoint_callback = CheckpointCallback(
-        save_freq=1000,
+        save_freq=100000,
         save_path="./checkpoints/",
         name_prefix="ppo_av_checkpoint",
         save_replay_buffer=True,
@@ -26,7 +26,7 @@ def main():
     
     callback_max_episodes = StopTrainingOnMaxEpisodes(max_episodes=1000, verbose=1)
     
-    callback = CallbackList([checkpoint_callback, eval_callback, callback_max_episodes])
+    callback = CallbackList([checkpoint_callback])
     
     policy_kwargs = dict(
         features_extractor_class=CustomCombinedExtractor,
@@ -46,8 +46,7 @@ def main():
         verbose=1,
     )
     
-    for i in range(10):
-        model.learn(total_timesteps=int(100), callback=callback)
+    model.learn(total_timesteps=int(1000000), callback=callback)
     
     model.save("checkpoints/sb3_ad_ppo_final")
     env.close()
