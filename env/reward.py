@@ -89,14 +89,14 @@ def __get_collision_reward(vehicle):
     
 def __penalize_steering_jerk(vehicle, threshold=0.2):
     global current_steering
-    steering_diff = abs(vehicle.get_vehicle().get_steering() - current_steering)
-    current_steering = vehicle.get_vehicle().get_steering()
+    steering_diff = abs(vehicle.get_steering() - current_steering)
+    current_steering = vehicle.get_steering()
     return 1.0 if steering_diff > threshold else 0.0
 
 def __penalize_low_throttle(vehicle, threshold=0.1):
     global current_throttle
-    throttle_diff = abs(vehicle.get_vehicle().get_throttle() - current_throttle)
-    current_throttle = vehicle.get_vehicle().get_throttle()
+    throttle_diff = abs(vehicle.get_throttle_brake() - current_throttle)
+    current_throttle = vehicle.get_throttle_brake()
     return 1.0 if throttle_diff > threshold else 0.0
     
 def __get_light_pole_trangression_reward(map, vehicle, world):

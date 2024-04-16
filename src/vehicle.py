@@ -248,6 +248,12 @@ class Vehicle:
     
     def get_throttle(self):
         return self.__throttle
+    
+    def get_throttle_break(self):
+        return self.__throttle if self.__throttle > 0.0 else -self.__brake
+
+    def get_steering(self):
+        return self.__steering_angle
 
     def get_brake(self):
         return self.__brake
