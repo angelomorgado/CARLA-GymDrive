@@ -1,11 +1,6 @@
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
 from env.environment import CarlaEnv
 from stable_baselines3 import PPO
 import gymnasium as gym
-from matplotlib import pyplot as plt
 
 from agent.custom_feature_extractor import CustomCombinedExtractor
 

@@ -26,13 +26,15 @@ SIM_FPS                 = 30
 ENV_SCENARIOS_FILE      = 'env/simple_scenarios.json'
 ENV_MAX_STEPS           = 3500 # Used to limit the number of steps in the environment and to calculate the reward for finishing an episode successfully
 ENV_REWARDS_LAMBDAS     = {
-                            'orientation': 0.5,
-                            'distance': -0.5,
-                            'time_driving': 0.001,
-                            'speed': -1,
+                            'orientation': 1,
+                            'distance': -3,
+                            'time_driving': 0.00005,
+                            'speed': -2,
                             'destination': 3.0,
-                            'collision': -3,
-                            'light_pole_transgression': -3,
-                            'stop_sign_transgression': -3,
-                            'time_limit': -1,
+                            'collision': -10,
+                            'light_pole_transgression': -10,
+                            'stop_sign_transgression': -10,
+                            'throttle_jerk': -2,
+                            'steering_jerk': -2,
+                            'time_limit': -5,
                          }

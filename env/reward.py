@@ -7,6 +7,8 @@ import numpy as np
 terminated = False
 inside_stop_area = False
 has_stopped = False
+current_steering = 0.0
+current_throttle = 0.0
 
 # ======================================== Main Reward Function ==========================================================
 # If you change this function's signature, you must change the signature of the function in the environment.py file!!
@@ -28,13 +30,15 @@ has_stopped = False
 #            reward_lambdas['time_driving'] * __get_time_driving_reward(vehicle), terminated
 
 def calculate_reward(vehicle: Vehicle, world: World, map: carla.Map, scenario_dict, num_steps: int, time_limit_reached: bool) -> float:
-    global terminated
+    global terminated, current_steering, current_throttle
     vehicle_location = vehicle.get_location()
     waypoint = map.get_waypoint(vehicle_location, project_to_road=True, lane_type=carla.LaneType.Driving)
     reward_lambdas = config.ENV_REWARDS_LAMBDAS
     terminated = False
     
     return reward_lambdas['orientation'] * __get_orientation_reward(waypoint, vehicle) + \
+           reward_lambdas['throttle_jerk'] * __penalize_low_throttle(vehicle) + \
+           reward_lambdas['steering_jerk'] * __penalize_steering_jerk(vehicle) + \
            reward_lambdas['speed'] * __get_speed_reward(vehicle) + \
            reward_lambdas['collision'] * __get_collision_reward(vehicle) + \
            reward_lambdas['time_driving'] * __get_time_driving_reward(vehicle), terminated
@@ -82,7 +86,19 @@ def __get_collision_reward(vehicle):
         return 1
     else:
         return 0
+    
+def __penalize_steering_jerk(vehicle, threshold=0.2):
+    global current_steering
+    steering_diff = abs(vehicle.get_vehicle().get_steering() - current_steering)
+    current_steering = vehicle.get_vehicle().get_steering()
+    return 1.0 if steering_diff > threshold else 0.0
 
+def __penalize_low_throttle(vehicle, threshold=0.1):
+    global current_throttle
+    throttle_diff = abs(vehicle.get_vehicle().get_throttle() - current_throttle)
+    current_throttle = vehicle.get_vehicle().get_throttle()
+    return 1.0 if throttle_diff > threshold else 0.0
+    
 def __get_light_pole_trangression_reward(map, vehicle, world):
     # Get the current waypoint of the vehicle
     current_waypoint = map.get_waypoint(vehicle.get_location(), project_to_road=True)
