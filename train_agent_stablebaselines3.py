@@ -46,7 +46,7 @@ def main():
         verbose=1,
     )
     
-    model.learn(total_timesteps=int(1000000), callback=callback)
+    model.learn(total_timesteps=int(100000), callback=callback)
     
     model.save("checkpoints/sb3_ad_ppo_final")
     env.close()
