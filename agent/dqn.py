@@ -18,6 +18,12 @@ class DQNAgent:
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        self.resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True)
+        self.resnet50.eval().to(self.device)
+        self.resnet50 = nn.Sequential(*list(self.resnet50.children())[:-1])
+        print(self.resnet50)
+        
 
         # Neural Network for Q-value approximation
         self.model = self.__build_model()
@@ -36,22 +42,51 @@ class DQNAgent:
         # Define the input sizes for each observation component
         lidar_size = (1024,)
         position_size = (3,)    
-        rgb_size = (360, 640, 3)  # Assuming rgb_data is a 360x640x3 image
+        rgb_size = (2048,) #(360, 640, 3)  # Assuming rgb_data is a 360x640x3 image
         situation_size = 1      # Assuming situation is a single scalar value
         target_position_size = (3,)  # Assuming target_position is a 3-dimensional vector
-
+        
+        # 3 mlp: 1 for lidar, 1 for rgb, and 1 for the rest, then join them in a fourth mlp
         # Calculate the total size of the concatenated input
         input_size = np.prod(lidar_size) + np.prod(position_size) + np.prod(rgb_size) + situation_size + np.prod(target_position_size)
+        print(f"Input size: {input_size}")
 
         # Define the neural network architecture
-        model = nn.Sequential(
-            nn.Linear(input_size, 128),
+        # RGB: 2048
+        model1 = nn.Sequential(
+            nn.Linear(input_size, 1024),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(1024, 1024),
             nn.ReLU(),
-            nn.Linear(128, self.action_space.n)
+            nn.Linear(1024, 512)
         )
-        return model.to(self.device)
+        
+        # Lidar: 1024
+        model2 = nn.Sequential(
+            nn.Linear(input_size, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256)
+        )
+        
+        # Rest: 7
+        model3 = nn.Sequential(
+            nn.Linear(input_size, 256),
+        )
+        
+        # Join the three models
+        final_model = nn.Sequential(
+            nn.Linear(2048, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, self.action_space.n)
+        )
+        
+        return model1, model2, model3, final_model
 
     def remember(self, state, action, reward, next_state, terminated, truncated):
         self.memory.append((state, action, reward, next_state, terminated, truncated))
@@ -62,6 +97,14 @@ class DQNAgent:
             return random.randrange(self.action_space.n)
         
         state = self.__process_state(state)
+        
+        # Model1, model2, model3, and final_model blah blah
+        rgb_value = self.model1(state)
+        lidar_value = self.model2(state)
+        rest_value = self.model3(state)
+        
+        final_value = self.final_model(torch.cat((rgb_value, lidar_value, rest_value)))
+        
         q_values = self.model(state)
         return torch.argmax(q_values).item()
 
@@ -122,6 +165,9 @@ class DQNAgent:
             lidar_data = lidar_data.unsqueeze(0)
             lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
             lidar_data = lidar_data.to(self.device).squeeze(0)
+            
+            # RGB
+            rgb_features = self.resnet50(state['rgb_data'])
 
             position = torch.FloatTensor(state['position']).to(self.device)
             rgb_data = torch.FloatTensor(state['rgb_data'].flatten()).to(self.device)
@@ -134,6 +180,9 @@ class DQNAgent:
             lidar_data = lidar_data.unsqueeze(0)
             lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
             lidar_data = lidar_data.to(self.device).squeeze(0)
+            
+            # RGB
+            rgb_features = self.resnet50(state['rgb_data'])
 
             position = torch.FloatTensor(state_data['position']).to(self.device)
             rgb_data = torch.FloatTensor(state_data['rgb_data'].flatten()).to(self.device)
