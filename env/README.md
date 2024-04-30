@@ -8,19 +8,6 @@ This tool was designed having Carla 0.9.15 in mind, however it should work with 
 
 The tool is a gym.Env wrap. This means that you can use this environment as a gym environment and it is even compatible with gym-compatible frameworks for training/testing such as stable-baselines3.
 
-## Instalation
-
-1. It is recommended to use a virtual environment with python 3.8 (e.g., conda).
-2. Set the environmental variable `CARLA_SERVER` as the location of the Carla server's directory.
-3. Install the requirements with pip install -r requirements.txt.
-4. (Optional) Run the CARLA server (It is not recommended to launch the server in low-quality mode as it can cause crashes). If you want the server to start and close automatically you can use the flag `initialize_server=True` when instaciating the environment.
-5. Run the client script (e.g., train or test script).
-
-## Known Issues
-
-- If the simulator is ran in low quality mode, it crashes the program, this is a problem in Carla's side and it's known by the community;
-- Moving the walkers causes segmentation fault. This is a known problem between the community.
-- Simply spawning the walkers might cause the program to crash. This is maybe due to my personal computer's performance. I haven't tested it in a more powerfull pc. I don't think it is a coding problem, but i might be wrong.
 
 ## Instructions Manual
 

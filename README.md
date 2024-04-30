@@ -64,6 +64,15 @@ This template's modules are located and documented in the `src` directory. Their
 
 ---
 
+## Known Issues
+
+- The simulator may crash when changing maps to many times. This is a known issue with Carla and is not a problem with the template. The problem is random, so if it happens, it is recommended to save checkpoints and then restart the training in the latest checkpoint.
+- If the simulator is ran in low quality mode, it crashes the program, this is a problem in Carla's side and it's known by the community;
+- Moving the walkers causes segmentation fault. This is a known problem between the community.
+- Simply spawning the walkers might cause the program to crash. This is maybe due to my personal computer's performance. I haven't tested it in a more powerfull pc. I don't think it is a coding problem, but i might be wrong.
+
+---
+
 ## License
 
 Carla GymDrive is licensed under the MIT License. See the [LICENSE](/LICENSE) file for details.
