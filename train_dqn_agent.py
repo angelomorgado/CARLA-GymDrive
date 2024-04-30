@@ -73,7 +73,7 @@ for episode in range(num_episodes):
     
     # Save model every 100 episodes
     if (episode + 1) % 5 == 0:
-        agent.save(f"agent/checkpoints/dqn_model_{episode + 1}.pt")
+        agent.save(f"checkpoints/dqn/dqn_model_{episode + 1}.pt")
         
         # print(f"rewards shape: {rewards.shape}, losses shape: {losses.shape}, episodes: {episode + 1}")
         

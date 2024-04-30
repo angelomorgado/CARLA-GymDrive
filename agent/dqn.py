@@ -27,8 +27,8 @@ class DQNAgent:
         self.loss_fn = nn.MSELoss()
         
         # Feature extractors
-        self.lidar_pointfeat = PointNetfeat()
-        self.lidar_pointfeat.train()
+        self.lidar_pointfeat = PointNetfeat(global_feat=True)
+        self.lidar_pointfeat.eval()
 
         self.last_loss = None
 
@@ -37,7 +37,7 @@ class DQNAgent:
         lidar_size = (1024,)
         position_size = (3,)    
         rgb_size = (360, 640, 3)  # Assuming rgb_data is a 360x640x3 image
-        situation_size = 4      # Assuming situation is a single scalar value
+        situation_size = 1      # Assuming situation is a single scalar value
         target_position_size = (3,)  # Assuming target_position is a 3-dimensional vector
 
         # Calculate the total size of the concatenated input
@@ -116,29 +116,32 @@ class DQNAgent:
         self.model.load_state_dict(torch.load(filename))
         self.target_model.load_state_dict(self.model.state_dict())
 
-    # def __process_state(self, state):
-    #     lidar_data, _, _ = self.lidar_pointfeat(state['lidar_data'])
-    #     position = state['position']
-    #     rgb_data = state['rgb_data'].flatten()
-    #     situation = state['situation']
-    #     target_position = state['target_position']
-    #     concatenated_state = np.concatenate((lidar_data, position, rgb_data, [situation], target_position))
-    #     return torch.FloatTensor(concatenated_state).to(self.device)
-    
     def __process_state(self, state):
-        lidar_data = state['lidar_data']
-        position = state['position']
-        rgb_data = state['rgb_data']
-        situation = state['situation']
-        target_position = state['target_position']
+        if isinstance(state, dict):
+            lidar_data = torch.from_numpy(state['lidar_data']).float()
+            lidar_data = lidar_data.unsqueeze(0)
+            lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
+            lidar_data = lidar_data.to(self.device).squeeze(0)
 
-        # Convert lidar data and rgb data to tensors if needed
-        if not isinstance(lidar_data, torch.Tensor):
-            lidar_data = torch.tensor(lidar_data, dtype=torch.float32)
-        if not isinstance(rgb_data, torch.Tensor):
-            rgb_data = torch.tensor(rgb_data, dtype=torch.float32)
+            position = torch.FloatTensor(state['position']).to(self.device)
+            rgb_data = torch.FloatTensor(state['rgb_data'].flatten()).to(self.device)
+            situation = torch.FloatTensor([state['situation']]).to(self.device)
+            target_position = torch.FloatTensor(state['target_position']).to(self.device)
+        elif isinstance(state, tuple) and len(state) == 2:
+            # Assuming state is a tuple with the format (state_data, environment_info)
+            state_data, environment_info = state
+            lidar_data = torch.from_numpy(state_data['lidar_data']).float()
+            lidar_data = lidar_data.unsqueeze(0)
+            lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
+            lidar_data = lidar_data.to(self.device).squeeze(0)
 
-        # Perform any additional processing if necessary
+            position = torch.FloatTensor(state_data['position']).to(self.device)
+            rgb_data = torch.FloatTensor(state_data['rgb_data'].flatten()).to(self.device)
+            situation = torch.FloatTensor([state_data['situation']]).to(self.device)
+            target_position = torch.FloatTensor(state_data['target_position']).to(self.device)
+        else:
+            raise ValueError("Invalid state format")
 
-        return {'lidar_data': lidar_data, 'position': position, 'rgb_data': rgb_data, 'situation': situation, 'target_position': target_position}
+        concatenated_state = torch.cat((lidar_data, position, rgb_data, situation, target_position))
 
+        return concatenated_state
