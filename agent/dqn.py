@@ -18,23 +18,23 @@ class DQNAgent:
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        
-        self.resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True)
-        self.resnet50.eval().to(self.device)
-        self.resnet50 = nn.Sequential(*list(self.resnet50.children())[:-1])
-        print(self.resnet50)
-        
 
         # Neural Network for Q-value approximation
-        self.model = self.__build_model()
-        self.target_model = self.__build_model()
-        self.target_model.load_state_dict(self.model.state_dict())
-        self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
+        self.model1, self.model2, self.model3, self.final_model = self.__build_model()
+        self.target_model1, self.target_model2, self.target_model3, self.target_final_model = self.__build_model()
+        self.update_target_model()
+        self.all_models = nn.ModuleList([self.model1, self.model2, self.model3, self.final_model])
+        self.optimizer = Adam(self.all_models.parameters(), lr=self.learning_rate)
         self.loss_fn = nn.MSELoss()
         
         # Feature extractors
+        #   Lidar PointNet
         self.lidar_pointfeat = PointNetfeat(global_feat=True)
-        self.lidar_pointfeat.eval()
+        self.lidar_pointfeat.eval().to(self.device)
+        #   RGB ResNet50
+        self.resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True)
+        self.resnet50.eval().to(self.device)
+        self.resnet50 = nn.Sequential(*list(self.resnet50.children())[:-1])
 
         self.last_loss = None
 
@@ -54,7 +54,7 @@ class DQNAgent:
         # Define the neural network architecture
         # RGB: 2048
         model1 = nn.Sequential(
-            nn.Linear(input_size, 1024),
+            nn.Linear(2048, 1024),
             nn.ReLU(),
             nn.Linear(1024, 1024),
             nn.ReLU(),
@@ -63,7 +63,7 @@ class DQNAgent:
         
         # Lidar: 1024
         model2 = nn.Sequential(
-            nn.Linear(input_size, 512),
+            nn.Linear(1024, 512),
             nn.ReLU(),
             nn.Linear(512, 512),
             nn.ReLU(),
@@ -72,12 +72,12 @@ class DQNAgent:
         
         # Rest: 7
         model3 = nn.Sequential(
-            nn.Linear(input_size, 256),
+            nn.Linear(7, 256),
         )
         
-        # Join the three models
+        # Join the three models: 512 + 256 + 256 = 1024
         final_model = nn.Sequential(
-            nn.Linear(2048, 512),
+            nn.Linear(1024, 512),
             nn.ReLU(),
             nn.Linear(512, 512),
             nn.ReLU(),
@@ -86,7 +86,13 @@ class DQNAgent:
             nn.Linear(256, self.action_space.n)
         )
         
-        return model1, model2, model3, final_model
+        return model1.to(self.device), model2.to(self.device), model3.to(self.device), final_model.to(self.device)
+
+    def update_target_model(self):
+        self.target_model1.load_state_dict(self.model1.state_dict())
+        self.target_model2.load_state_dict(self.model2.state_dict())
+        self.target_model3.load_state_dict(self.model3.state_dict())
+        self.target_final_model.load_state_dict(self.final_model.state_dict())
 
     def remember(self, state, action, reward, next_state, terminated, truncated):
         self.memory.append((state, action, reward, next_state, terminated, truncated))
@@ -96,17 +102,30 @@ class DQNAgent:
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_space.n)
         
-        state = self.__process_state(state)
+        return self.forward(state)
+
+    def forward(self, state):
+        states = self.__process_state(state)
         
         # Model1, model2, model3, and final_model blah blah
-        rgb_value = self.model1(state)
-        lidar_value = self.model2(state)
-        rest_value = self.model3(state)
+        rgb_value = self.model1(states[0])
+        lidar_value = self.model2(states[1])
+        rest_value = self.model3(states[2])
         
-        final_value = self.final_model(torch.cat((rgb_value, lidar_value, rest_value)))
+        q_values = self.final_model(torch.cat((rgb_value, lidar_value, rest_value)))
         
-        q_values = self.model(state)
         return torch.argmax(q_values).item()
+    
+    def target_forward(self, state):
+        states = self.__process_state(state)
+        
+        rgb_value = self.target_model1(states[0])
+        lidar_value = self.target_model2(states[1])
+        rest_value = self.target_model3(states[2])
+        
+        q_values = self.target_final_model(torch.cat((rgb_value, lidar_value, rest_value)))
+        
+        return q_values
 
     def replay(self):
         if len(self.memory) < self.batch_size:
@@ -117,11 +136,18 @@ class DQNAgent:
         for state, action, reward, next_state, terminated, truncated in minibatch:
             target = reward
             if not terminated and not truncated:
-                next_state = self.__process_state(next_state)
-                target = reward + self.gamma * torch.max(self.target_model(next_state)).item()
+                next_states = self.__process_state(next_state)  # Assuming states in memory are already processed
+                print(next_states)
+                exit()
+                target = reward + self.gamma * torch.max(self.target_forward(next_states)).item()
 
-            state = self.__process_state(state)
-            q_values = self.model(state)
+            processed_states = state  # Assuming states in memory are already processed
+
+            rgb_value = self.model1(processed_states[0])
+            lidar_value = self.model2(processed_states[1])
+            rest_value = self.model3(processed_states[2])
+            
+            q_values = self.final_model(torch.cat((rgb_value, lidar_value, rest_value)))
 
             q_values[action] = target
 
@@ -141,14 +167,11 @@ class DQNAgent:
 
         self.last_loss = loss.item()
 
-    def update_target_model(self):
-        self.target_model.load_state_dict(self.model.state_dict())
-
     def train(self, state, action, reward, next_state, terminated, truncated):
         self.remember(state, action, reward, next_state, terminated, truncated)
         self.replay()
         self.update_target_model()
-
+        
     def get_loss(self):
         return self.last_loss
 
@@ -160,37 +183,35 @@ class DQNAgent:
         self.target_model.load_state_dict(self.model.state_dict())
 
     def __process_state(self, state):
-        if isinstance(state, dict):
-            lidar_data = torch.from_numpy(state['lidar_data']).float()
-            lidar_data = lidar_data.unsqueeze(0)
-            lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
-            lidar_data = lidar_data.to(self.device).squeeze(0)
-            
-            # RGB
-            rgb_features = self.resnet50(state['rgb_data'])
+        if isinstance(state, tuple):
+            # If state is a tuple, assume it contains the necessary information
+            states, environment_info = state
+            rgb_data, lidar_data, position, situation, target_position = states
 
+            # Convert lidar_data and rgb_data to tensors
+            lidar_data = torch.from_numpy(lidar_data).float().to(self.device)
+            rgb_data = torch.from_numpy(rgb_data).float().to(self.device)
+
+        elif isinstance(state, dict):
+            # If state is a dictionary, extract the relevant information
+            rgb_data = torch.from_numpy(state['rgb_data']).float().to(self.device)
+            lidar_data = torch.from_numpy(state['lidar_data']).float().to(self.device)
             position = torch.FloatTensor(state['position']).to(self.device)
-            rgb_data = torch.FloatTensor(state['rgb_data'].flatten()).to(self.device)
             situation = torch.FloatTensor([state['situation']]).to(self.device)
             target_position = torch.FloatTensor(state['target_position']).to(self.device)
-        elif isinstance(state, tuple) and len(state) == 2:
-            # Assuming state is a tuple with the format (state_data, environment_info)
-            state_data, environment_info = state
-            lidar_data = torch.from_numpy(state_data['lidar_data']).float()
-            lidar_data = lidar_data.unsqueeze(0)
-            lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
-            lidar_data = lidar_data.to(self.device).squeeze(0)
-            
-            # RGB
-            rgb_features = self.resnet50(state['rgb_data'])
 
-            position = torch.FloatTensor(state_data['position']).to(self.device)
-            rgb_data = torch.FloatTensor(state_data['rgb_data'].flatten()).to(self.device)
-            situation = torch.FloatTensor([state_data['situation']]).to(self.device)
-            target_position = torch.FloatTensor(state_data['target_position']).to(self.device)
         else:
             raise ValueError("Invalid state format")
 
-        concatenated_state = torch.cat((lidar_data, position, rgb_data, situation, target_position))
+        lidar_data = lidar_data.unsqueeze(0)
+        lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
+        lidar_data = lidar_data.squeeze(0)
+        
+        # RGB (2048,)
+        # Assuming rgb_data is a numpy array with shape (360, 640, 3)
+        rgb_data = rgb_data.transpose(0, 2)  # Transpose to (3, 360, 640)
+        rgb_features = self.resnet50(rgb_data.unsqueeze(0)).squeeze()  # Reshape to (1, 2048) and squeeze to (2048,)
 
-        return concatenated_state
+        rest = torch.cat((position, situation, target_position)).to(self.device)
+
+        return (rgb_features, lidar_data, rest)
