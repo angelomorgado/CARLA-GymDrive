@@ -7,7 +7,7 @@ from torch.optim import Adam
 from env.env_aux.point_net import PointNetfeat
 
 class DQNAgent:
-    def __init__(self, observation_space, action_space, learning_rate=0.001, gamma=0.99, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, batch_size=32):
+    def __init__(self, observation_space, action_space, learning_rate=0.001, gamma=0.99, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, batch_size=16):
         self.observation_space = observation_space
         self.action_space = action_space
         self.memory = []
@@ -32,7 +32,7 @@ class DQNAgent:
         self.lidar_pointfeat = PointNetfeat(global_feat=True)
         self.lidar_pointfeat.eval().to(self.device)
         #   RGB ResNet50
-        self.resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True)
+        self.resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True, trust_repo=True)
         self.resnet50.eval().to(self.device)
         self.resnet50 = nn.Sequential(*list(self.resnet50.children())[:-1])
 
@@ -49,7 +49,6 @@ class DQNAgent:
         # 3 mlp: 1 for lidar, 1 for rgb, and 1 for the rest, then join them in a fourth mlp
         # Calculate the total size of the concatenated input
         input_size = np.prod(lidar_size) + np.prod(position_size) + np.prod(rgb_size) + situation_size + np.prod(target_position_size)
-        print(f"Input size: {input_size}")
 
         # Define the neural network architecture
         # RGB: 2048
@@ -131,41 +130,52 @@ class DQNAgent:
         if len(self.memory) < self.batch_size:
             return
 
-        minibatch = random.sample(self.memory, self.batch_size)
+        batch = random.sample(self.memory, self.batch_size)
         states, targets = [], []
-        for state, action, reward, next_state, terminated, truncated in minibatch:
+        
+        for state, action, reward, next_state, terminated, truncated in batch:
             target = reward
-            if not terminated and not truncated:
-                next_states = self.__process_state(next_state)  # Assuming states in memory are already processed
-                print(next_states)
-                exit()
-                target = reward + self.gamma * torch.max(self.target_forward(next_states)).item()
-
-            processed_states = state  # Assuming states in memory are already processed
-
-            rgb_value = self.model1(processed_states[0])
-            lidar_value = self.model2(processed_states[1])
-            rest_value = self.model3(processed_states[2])
+            if not terminated:
+                target = reward + self.gamma * torch.max(self.target_forward(next_state).detach())
             
-            q_values = self.final_model(torch.cat((rgb_value, lidar_value, rest_value)))
-
-            q_values[action] = target
-
-            states.append(state)
-            targets.append(q_values)
+            # Process the state and pass through individual MLPs
+            states_processed = self.__process_state(state)
+            rgb_value = self.model1(states_processed[0])
+            lidar_value = self.model2(states_processed[1])
+            rest_value = self.model3(states_processed[2])
+            
+            # Combine outputs from individual MLPs
+            combined_value = torch.cat((rgb_value, lidar_value, rest_value), dim=0)  # Correct the dimension here
+            
+            # Forward pass through the final MLP
+            q_values = self.final_model(combined_value)
+            
+            # Convert q_values to PyTorch tensor
+            q_values = q_values.cpu()
+            
+            # Convert q_values to numpy array for modification
+            q_values_np = q_values.detach().numpy()
+            
+            # Update the target Q-value for the selected action
+            q_values_np[action] = target
+            
+            # Convert the modified target Q-values back to a tensor
+            target_f = torch.tensor(q_values_np, dtype=torch.float32, device=self.device)
+            
+            states.append(states_processed)
+            targets.append(target_f)
 
         states = torch.stack(states)
         targets = torch.stack(targets)
 
         self.optimizer.zero_grad()
-        loss = self.loss_fn(self.model(states), targets)
+        outputs = self.final_model(states)
+        loss = self.loss_fn(outputs, targets)
         loss.backward()
         self.optimizer.step()
 
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
-
         self.last_loss = loss.item()
+
 
     def train(self, state, action, reward, next_state, terminated, truncated):
         self.remember(state, action, reward, next_state, terminated, truncated)
@@ -183,16 +193,14 @@ class DQNAgent:
         self.target_model.load_state_dict(self.model.state_dict())
 
     def __process_state(self, state):
-        if isinstance(state, tuple):
-            # If state is a tuple, assume it contains the necessary information
-            states, environment_info = state
-            rgb_data, lidar_data, position, situation, target_position = states
+        
+        if isinstance(state, tuple) or isinstance(state, list) and isinstance(state[0], torch.Tensor):
+            return state
 
-            # Convert lidar_data and rgb_data to tensors
-            lidar_data = torch.from_numpy(lidar_data).float().to(self.device)
-            rgb_data = torch.from_numpy(rgb_data).float().to(self.device)
-
-        elif isinstance(state, dict):
+        else:
+            if isinstance(state, tuple):
+                state = state[0]
+            
             # If state is a dictionary, extract the relevant information
             rgb_data = torch.from_numpy(state['rgb_data']).float().to(self.device)
             lidar_data = torch.from_numpy(state['lidar_data']).float().to(self.device)
@@ -200,18 +208,17 @@ class DQNAgent:
             situation = torch.FloatTensor([state['situation']]).to(self.device)
             target_position = torch.FloatTensor(state['target_position']).to(self.device)
 
-        else:
-            raise ValueError("Invalid state format")
-
-        lidar_data = lidar_data.unsqueeze(0)
-        lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
-        lidar_data = lidar_data.squeeze(0)
+            lidar_data = lidar_data.unsqueeze(0)
+            lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
+            lidar_data = lidar_data.squeeze(0)
         
-        # RGB (2048,)
-        # Assuming rgb_data is a numpy array with shape (360, 640, 3)
-        rgb_data = rgb_data.transpose(0, 2)  # Transpose to (3, 360, 640)
-        rgb_features = self.resnet50(rgb_data.unsqueeze(0)).squeeze()  # Reshape to (1, 2048) and squeeze to (2048,)
+            # RGB (2048,)
+            # Assuming rgb_data is a numpy array with shape (360, 640, 3)
+            rgb_data = rgb_data.transpose(0, 2)  # Transpose to (3, 360, 640)
+            rgb_features = self.resnet50(rgb_data.unsqueeze(0)).squeeze()  # Reshape to (1, 2048) and squeeze to (2048,)
+            # create random tensor with shape (2048,)
+            # rgb_features = torch.rand(2048).to(self.device)
 
-        rest = torch.cat((position, situation, target_position)).to(self.device)
+            rest = torch.cat((position, situation, target_position)).to(self.device)
 
-        return (rgb_features, lidar_data, rest)
+            return (rgb_features, lidar_data, rest)
