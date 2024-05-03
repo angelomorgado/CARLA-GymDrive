@@ -274,7 +274,12 @@ class CarlaEnv(gym.Env):
     def __spawn_vehicle(self, s_dict):
         location = (s_dict['initial_position']['x'], s_dict['initial_position']['y'], s_dict['initial_position']['z'])
         rotation = (s_dict['initial_rotation']['pitch'], s_dict['initial_rotation']['yaw'], s_dict['initial_rotation']['roll'])
-        self.__vehicle.spawn_vehicle(location, rotation)
+        try:
+            self.__vehicle.spawn_vehicle(location, rotation)
+        except Exception as e:
+            print("Error spawning vehicle! Reloading Map...")
+            self.__world.reload_map()
+            self.load_scenario(self.__active_scenario_name, self.__seed)
     
     def __toggle_lights(self):
         if "night" in self.__world.get_active_weather().lower() or "noon" in self.__world.get_active_weather().lower():
