@@ -20,23 +20,15 @@ class DQN_Agent:
         else:
             self.env = env
             
+        torch.cuda.empty_cache() 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # Feature extractors
-        #   Lidar PointNet
-        # self.lidar_pointfeat = PointNetfeat(global_feat=True)
-        # self.lidar_pointfeat.eval().to(self.device)
-        #   RGB ResNet50
-        self.resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True, trust_repo=True)
-        self.resnet50.eval().to(self.device)
-        self.resnet50 = nn.Sequential(*list(self.resnet50.children())[:-1])
-            
         self.lr = lr
         self.policy_net = QNetwork(self.env, self.lr)
         self.target_net = QNetwork(self.env, self.lr)
         self.target_net.net.load_state_dict(self.policy_net.net.state_dict())  # Copy the weight of the policy network
         self.rm = ReplayMemory(self.env)
         self.burn_in_memory()
-        self.batch_size = 8
+        self.batch_size = 4
         self.gamma = 0.99
         self.c = 0
 
@@ -54,7 +46,6 @@ class DQN_Agent:
             # Reset environment if terminated or truncated
             if terminated or truncated:
                 state, _ = self.env.reset()
-                # state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
                 state = self.process_state(state)
             
             # Randomly select an action (left or right) and take a step
@@ -64,7 +55,6 @@ class DQN_Agent:
             if terminated:
                 next_state = None
             else:
-                # next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
                 next_state = self.process_state(next_state)
                 
             # Store new experience into memory
@@ -90,30 +80,17 @@ class DQN_Agent:
         # Resize the RGB image to 224x224
         rgb_data = cv2.resize(state['rgb_data'], (224, 224))
         rgb_data = torch.from_numpy(rgb_data).float().to(self.device)
-        # lidar_data = torch.from_numpy(state['lidar_data']).float().to(self.device)
         position = torch.FloatTensor(state['position']).to(self.device)
         situation = torch.FloatTensor([state['situation']]).to(self.device)
         target_position = torch.FloatTensor(state['target_position']).to(self.device)
 
-        # lidar_data = lidar_data.unsqueeze(0)
-        # lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
-        # lidar_data = lidar_data.squeeze(0)
-    
-        # RGB (2048,)
-        # rgb_data was a numpy array with shape (360, 640, 3) but now it is a tensor with shape (360, 640) 
-        rgb_data = rgb_data.transpose(0, 2)  # Transpose to (3, 360, 640)
-        rgb_features = self.resnet50(rgb_data.unsqueeze(0)).squeeze()  # Reshape to (1, 2048) and squeeze to (2048,)
-        # create random tensor with shape (2048,)
-        # rgb_features = torch.rand(2048).to(self.device)
-
         rest = torch.cat((position, situation, target_position)).to(self.device)
 
-        return (rgb_features, rest)
+        return (rgb_data, rest)
         
     def train(self):
         # Train the Q-network using Deep Q-learning.
         state, _ = self.env.reset()
-        # state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         state = self.process_state(state)
         terminated = False
         truncated = False
@@ -132,7 +109,6 @@ class DQN_Agent:
             if terminated:
                 next_state = None
             else:
-                # next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
                 next_state = self.process_state(next_state)
 
             # Store the new experience
@@ -181,7 +157,6 @@ class DQN_Agent:
         rewards = []
 
         for t in range(max_t):
-            # state = torch.from_numpy(state).float().unsqueeze(0)
             state = self.process_state(state)
             with torch.no_grad():
                 q_values = self.policy_net.net(state)
@@ -198,55 +173,54 @@ class DQNNetwork(nn.Module):
         super(DQNNetwork, self).__init__()
 
         # Define the neural network architecture
-        # RGB: 2048
+        # RGB: (224, 224) -> 512
         self.model1 = nn.Sequential(
-            nn.Linear(2048, 1024),
+            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Linear(1024, 1024),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Linear(1024, 512)
-        )
-        
-        # # Lidar: 1024
-        # self.model2 = nn.Sequential(
-        #     nn.Linear(1024, 512),
-        #     nn.ReLU(),
-        #     nn.Linear(512, 512),
-        #     nn.ReLU(),
-        #     nn.Linear(512, 256)
-        # )
-        
-        # Rest: 7
-        self.model3 = nn.Sequential(
-            nn.Linear(7, 512),
-        )
-        
-        # Join the three models: 512 + 256 + 256 = 1024
-        self.final_model = nn.Sequential(
-            nn.Linear(1024, 512),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Linear(512, 512),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Linear(512, 256),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Linear(256, action_space.n)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d(1)  # Global average pooling to get a fixed-size feature vector
         )
 
-        # Initialization using Xavier uniform (a popular technique for initializing weights in NNs)
+        # Rest: 7
+        self.model3 = nn.Sequential(
+            nn.Linear(7, 256),
+        )
+
+        self.final_model = nn.Sequential(
+            nn.Linear(512 + 256, 512),  # Combine image and rest features, output 512-dimensional vector
+            nn.ReLU(),
+            nn.Linear(512, action_space.n)
+        )
+
+        # Initialization using Xavier uniform
         for layer in [self.model1, self.model3, self.final_model]:
             for sub_layer in layer:
-                if isinstance(sub_layer, nn.Linear):
+                if isinstance(sub_layer, nn.Linear) or isinstance(sub_layer, nn.Conv2d):
                     nn.init.xavier_uniform_(sub_layer.weight)
                     nn.init.constant_(sub_layer.bias, 0.0)
 
-    def forward(self, inputs):
-        # Forward pass
-        rgb_value = self.model1(inputs[0])
-        # lidar_value = self.model2(inputs[1])
-        rest_value = self.model3(inputs[2])
-        return self.final_model(torch.cat([rgb_value, rest_value], dim=1))
+    def forward(self, rgb_input, rest_input):
+        # Forward pass through the network
+        image_features = self.model1(rgb_input)
+        image_features = image_features.view(image_features.size(0), -1)  # Flatten the feature map
+        rest_output = self.model3(rest_input)
+        combined_features = torch.cat((image_features, rest_output), dim=1)
+        return self.final_model(combined_features)
 
-    
 class QNetwork:
     def __init__(self, env, lr, logdir=None):
         # Define Q-network with specified architecture
