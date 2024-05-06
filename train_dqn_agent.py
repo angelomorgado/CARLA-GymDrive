@@ -1,84 +1,53 @@
 import gymnasium as gym
+import tqdm
+from agent.dqn import DQN_Agent
+from matplotlib import pyplot as plt
 import numpy as np
-import matplotlib.pyplot as plt
-from agent.dqn import DQNAgent
 from env.environment import CarlaEnv
 
-def plot_graph(episodes, rewards, losses):
-    # Make a plot with two lines on the same figure and the y axis has two sets of values
-    fig, ax1 = plt.subplots()
-    ax1.set_xlabel('Episodes')
-    ax1.set_ylabel('Rewards', color='tab:blue')
-    ax1.plot(episodes, rewards, color='tab:blue')
-    ax1.tick_params(axis='y', labelcolor='tab:blue')
-    
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('Loss', color='tab:red')
-    ax2.plot(episodes, losses, color='tab:red')
-    ax2.tick_params(axis='y', labelcolor='tab:red')
-    
-    fig.tight_layout()
-    plt.savefig(f'agent/plots/dqn_{len(episodes)}_loss_reward.png')
+# Set environment and training parameters
+num_episodes_train = 10
+num_episodes_test = 20
+learning_rate = 5e-4
+evaluate_every = 1
 
-# Environment
+# Create the environment
 env = gym.make('carla-rl-gym-v0', time_limit=55, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=False, has_traffic=False)
-state_space = env.observation_space
-action_space = env.action_space
+action_space_size = env.action_space.n
 
-# Agent
-agent = DQNAgent(state_space, action_space)
+# Plot average performance of 5 trials
+num_seeds = 5
+l = num_episodes_train // 10
+res = np.zeros((num_seeds, l))
+gamma = 0.99
 
-rewards = np.array([])
-losses = np.array([])
+reward_means = []
+# Create an instance of the DQN_Agent class
+agent = DQN_Agent(env=env, lr=learning_rate)
 
-# Training
-num_episodes = 10
-for episode in range(num_episodes):
-    state = env.reset()
-    truncated = False
-    terminated = False
-    total_reward = 0
-    
-    episode_losses = []
-    
-    while True:
-        # Choose action
-        action = agent.act(state)
-        
-        # Take action
-        next_state, reward, terminated, truncated, info = env.step(action)
-        
-        # Train the agent
-        agent.train(state, action, reward, next_state, terminated, truncated)
-        
-        # Update state
-        state = next_state
-    
-        episode_losses.append(agent.get_loss())
-        
-        total_reward += reward
-        
-        if terminated or truncated:
-            # Store reward
-            rewards = np.append(rewards, total_reward)
-            break
-    
-    try:
-        losses = np.append(losses, np.mean(episode_losses))
-    except TypeError:
-        losses = np.append(losses, 0)
-    
-    # Print episode info
-    print(f"Episode: {episode + 1}, Total Reward: {total_reward}, Loss: {losses[-1]}")
-    
-    # Save model every 100 episodes
-    if (episode + 1) % 5 == 0:
-        agent.save(f"checkpoints/dqn/dqn_model_{episode + 1}.pt")
-        
-        # print(f"rewards shape: {rewards.shape}, losses shape: {losses.shape}, episodes: {episode + 1}")
-        
-        episodes = np.arange(episode + 1)
-        plot_graph(episodes, rewards, losses)
+# Training loop
+for m in range(num_episodes_train):
+    agent.train()
 
-# Close environment
-env.close()
+    # Evaluate the agent every 10 episodes during training
+    if m % evaluate_every == 0:
+        print("Episode: {}".format(m))
+
+        # Evaluate the agent's performance over 20 test episodes
+        G = np.zeros(num_episodes_test)
+        for k in range(num_episodes_test):
+            g = agent.test()
+            G[k] = g
+
+        reward_mean = G.mean()
+        reward_sd = G.std()
+        print(f"The test reward for episode {m} is {reward_mean} with a standard deviation of {reward_sd}.")
+        reward_means.append(reward_mean)
+
+
+# Plot the average performance of the agent over the training episodes
+plt.plot(reward_means)
+plt.xlabel('Episode')
+plt.ylabel('Average Reward')
+plt.title('Average Reward over Training Episodes')
+plt.savefig('agent/plots/dqn_average_reward.png')
