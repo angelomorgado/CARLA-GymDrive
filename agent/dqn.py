@@ -169,7 +169,7 @@ class DQN_Agent:
         return np.sum(rewards)
 
 class DQNNetwork(nn.Module):
-    def __init__(self, action_space):
+    def __init__(self, output_n):
         super(DQNNetwork, self).__init__()
 
         # Define the neural network architecture
@@ -203,7 +203,7 @@ class DQNNetwork(nn.Module):
         self.final_model = nn.Sequential(
             nn.Linear(512 + 256, 512),  # Combine image and rest features, output 512-dimensional vector
             nn.ReLU(),
-            nn.Linear(512, action_space.n)
+            nn.Linear(512, output_n)
         )
 
         # Initialization using Xavier uniform
@@ -215,16 +215,17 @@ class DQNNetwork(nn.Module):
 
     def forward(self, rgb_input, rest_input):
         # Forward pass through the network
+        print("========= image_features =========")
         image_features = self.model1(rgb_input)
-        image_features = image_features.view(image_features.size(0), -1)  # Flatten the feature map
+        image_features = torch.squeeze(image_features)  # Remove dummy dimensions
         rest_output = self.model3(rest_input)
-        combined_features = torch.cat((image_features, rest_output), dim=1)
+        combined_features = torch.cat((image_features, rest_output))
         return self.final_model(combined_features)
 
 class QNetwork:
     def __init__(self, env, lr, logdir=None):
         # Define Q-network with specified architecture
-        self.net = DQNNetwork(env.action_space)
+        self.net = DQNNetwork(env.action_space.n)
         self.env = env
         self.lr = lr 
         self.logdir = logdir
