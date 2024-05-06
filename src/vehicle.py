@@ -138,14 +138,25 @@ class Vehicle:
                 print('Error: Unknown sensor ', sensor)
     
     # This method returns the observation data from the used sensors in the environment (it excludes the collision and lane invasion sensors, which are used for the reward function only). If you're using a different environment, you should change this method to return the observation data that you need.
-    # TODO: Make it dynamic to each model.
-    # In this case [RGB image, LiDAR point cloud, Current position], the target position and the current situation are added in the environment module.
     def get_observation_data(self):
-        rgb_data = self.__sensor_dict['rgb_camera'].get_data()
-        lidar_data = self.__sensor_dict['lidar'].get_data()
-        gnss_data = self.__sensor_dict['gnss'].get_data()
+        data_dict = {}
+        if 'rgb_camera' in self.__sensor_dict:
+            rgb_data = self.__sensor_dict['rgb_camera'].get_data()
+            data_dict['rgb_data'] = rgb_data
+        if 'lidar' in self.__sensor_dict:
+            lidar_data = self.__sensor_dict['lidar'].get_data()
+            data_dict['lidar_data'] = lidar_data
+        if 'gnss' in self.__sensor_dict:
+            gnss_data = self.__sensor_dict['gnss'].get_data()
+            data_dict['gnss_data'] = gnss_data
+        if 'imu' in self.__sensor_dict:
+            imu_data = self.__sensor_dict['imu'].get_data()
+            data_dict['imu_data'] = imu_data
+        if 'radar' in self.__sensor_dict:
+            radar_data = self.__sensor_dict['radar'].get_data()
+            data_dict['radar_data'] = radar_data
 
-        return [rgb_data, lidar_data, gnss_data]
+        return data_dict
 
     def sensors_ready(self):
         for sensor in self.__sensor_dict:

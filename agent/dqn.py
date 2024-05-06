@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from collections import namedtuple
 import collections
-from env.env_aux.point_net import PointNetfeat
+# from env.env_aux.point_net import PointNetfeat
 
 
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
@@ -22,8 +22,8 @@ class DQN_Agent:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Feature extractors
         #   Lidar PointNet
-        self.lidar_pointfeat = PointNetfeat(global_feat=True)
-        self.lidar_pointfeat.eval().to(self.device)
+        # self.lidar_pointfeat = PointNetfeat(global_feat=True)
+        # self.lidar_pointfeat.eval().to(self.device)
         #   RGB ResNet50
         self.resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True, trust_repo=True)
         self.resnet50.eval().to(self.device)
@@ -35,7 +35,7 @@ class DQN_Agent:
         self.target_net.net.load_state_dict(self.policy_net.net.state_dict())  # Copy the weight of the policy network
         self.rm = ReplayMemory(self.env)
         self.burn_in_memory()
-        self.batch_size = 16
+        self.batch_size = 8
         self.gamma = 0.99
         self.c = 0
 

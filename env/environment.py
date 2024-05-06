@@ -196,15 +196,15 @@ class CarlaEnv(gym.Env):
     # ===================================================== OBSERVATION/ACTION METHODS =====================================================
     def __update_observation(self):        
         observation_space = self.__vehicle.get_observation_data()
-        rgb_image = observation_space[0]
-        lidar_point_cloud = observation_space[1]
-        current_position = observation_space[2]
+        rgb_image = observation_space['rgb_data']
+        # lidar_point_cloud = observation_space['lidar_data']
+        current_position = observation_space['gnss_data']
         target_position = np.array([self.__active_scenario_dict['target_gnss']['lat'], self.__active_scenario_dict['target_gnss']['lon'], self.__active_scenario_dict['target_gnss']['alt']])
         situation = self.__situations_map[self.__active_scenario_dict['situation']]
 
         observation = {
             'rgb_data': np.uint8(rgb_image),
-            'lidar_data': np.float32(lidar_point_cloud),
+            # 'lidar_data': np.float32(lidar_point_cloud),
             'position': np.float32(current_position),
             'target_position': np.float32(target_position),
             'situation': situation

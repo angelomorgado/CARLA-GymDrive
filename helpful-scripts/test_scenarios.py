@@ -5,7 +5,7 @@ from env.environment import CarlaEnv
 
 # Used to checkout all the scenarios
 def env_test():
-    env = CarlaEnv('carla-rl-gym_cont', initialize_server=True, has_traffic=True, verbose=True)
+    env = CarlaEnv('carla-rl-gym_cont', initialize_server=True, has_traffic=True, verbose=True, show_sensor_data=True)
     active_s = 0
 
     while True:
