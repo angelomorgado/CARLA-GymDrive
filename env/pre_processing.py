@@ -15,8 +15,6 @@ class PreProcessing:
     
     def preprocess_data(self, observation_data):
         # observation_data['lidar_data'] = self.__process_lidar(observation_data['lidar_data'])
-        # Turn RGB data into a 1 channel image
-        observation_data['rgb_data'] = cv2.cvtColor(observation_data['rgb_data'], cv2.COLOR_RGB2GRAY)
         return observation_data
 
     # This method extracts the features from the lidar data before feeding it to the policy network

@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from collections import namedtuple
 import collections
+import cv2
 # from env.env_aux.point_net import PointNetfeat
 
 
@@ -85,19 +86,21 @@ class DQN_Agent:
         # Implement a greedy policy for test time.
         return torch.argmax(q_values)
 
-    def process_state(self, state):  
-        rgb_data = torch.from_numpy(state['rgb_data']).float().to(self.device)
-        lidar_data = torch.from_numpy(state['lidar_data']).float().to(self.device)
+    def process_state(self, state):
+        # Resize the RGB image to 224x224
+        rgb_data = cv2.resize(state['rgb_data'], (224, 224))
+        rgb_data = torch.from_numpy(rgb_data).float().to(self.device)
+        # lidar_data = torch.from_numpy(state['lidar_data']).float().to(self.device)
         position = torch.FloatTensor(state['position']).to(self.device)
         situation = torch.FloatTensor([state['situation']]).to(self.device)
         target_position = torch.FloatTensor(state['target_position']).to(self.device)
 
-        lidar_data = lidar_data.unsqueeze(0)
-        lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
-        lidar_data = lidar_data.squeeze(0)
+        # lidar_data = lidar_data.unsqueeze(0)
+        # lidar_data, _, _ = self.lidar_pointfeat(lidar_data)
+        # lidar_data = lidar_data.squeeze(0)
     
         # RGB (2048,)
-        # Assuming rgb_data is a numpy array with shape (360, 640, 3)
+        # rgb_data was a numpy array with shape (360, 640, 3) but now it is a tensor with shape (360, 640) 
         rgb_data = rgb_data.transpose(0, 2)  # Transpose to (3, 360, 640)
         rgb_features = self.resnet50(rgb_data.unsqueeze(0)).squeeze()  # Reshape to (1, 2048) and squeeze to (2048,)
         # create random tensor with shape (2048,)
@@ -105,7 +108,7 @@ class DQN_Agent:
 
         rest = torch.cat((position, situation, target_position)).to(self.device)
 
-        return (rgb_features, lidar_data, rest)
+        return (rgb_features, rest)
         
     def train(self):
         # Train the Q-network using Deep Q-learning.
@@ -204,18 +207,18 @@ class DQNNetwork(nn.Module):
             nn.Linear(1024, 512)
         )
         
-        # Lidar: 1024
-        self.model2 = nn.Sequential(
-            nn.Linear(1024, 512),
-            nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, 256)
-        )
+        # # Lidar: 1024
+        # self.model2 = nn.Sequential(
+        #     nn.Linear(1024, 512),
+        #     nn.ReLU(),
+        #     nn.Linear(512, 512),
+        #     nn.ReLU(),
+        #     nn.Linear(512, 256)
+        # )
         
         # Rest: 7
         self.model3 = nn.Sequential(
-            nn.Linear(7, 256),
+            nn.Linear(7, 512),
         )
         
         # Join the three models: 512 + 256 + 256 = 1024
@@ -230,7 +233,7 @@ class DQNNetwork(nn.Module):
         )
 
         # Initialization using Xavier uniform (a popular technique for initializing weights in NNs)
-        for layer in [self.model1, self.model2, self.model3, self.final_model]:
+        for layer in [self.model1, self.model3, self.final_model]:
             for sub_layer in layer:
                 if isinstance(sub_layer, nn.Linear):
                     nn.init.xavier_uniform_(sub_layer.weight)
@@ -239,9 +242,9 @@ class DQNNetwork(nn.Module):
     def forward(self, inputs):
         # Forward pass
         rgb_value = self.model1(inputs[0])
-        lidar_value = self.model2(inputs[1])
+        # lidar_value = self.model2(inputs[1])
         rest_value = self.model3(inputs[2])
-        return self.final_model(torch.cat([rgb_value, lidar_value, rest_value], dim=1))
+        return self.final_model(torch.cat([rgb_value, rest_value], dim=1))
 
     
 class QNetwork:
