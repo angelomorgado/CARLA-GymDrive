@@ -8,9 +8,9 @@ class DQNNetwork(nn.Module):
         super(DQNNetwork, self).__init__()
 
         # Define the neural network architecture
-        # RGB: (224, 224) -> 512
+        # Grayscale: (224, 224) -> 512
         self.model1 = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1),
@@ -50,14 +50,16 @@ class DQNNetwork(nn.Module):
 
     def forward(self, rgb_input, rest_input):
         # Forward pass through the network
-        print("========= image_features =========")
         image_features = self.model1(rgb_input)
         image_features = torch.squeeze(image_features)  # Remove dummy dimensions
+        print(image_features.shape)
         rest_output = self.model3(rest_input)
-        combined_features = torch.cat((image_features, rest_output))
+        print(rest_output.shape)
+        combined_features = torch.cat((image_features, rest_output), dim=0)
         return self.final_model(combined_features)
+
 
 model = DQNNetwork(4).to("cuda")
 
 # Print the summary of the model
-torchinfo.summary(model, [(3, 224, 224), (7,)])
+torchinfo.summary(model, [(1, 224, 224), (7,)])

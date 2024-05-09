@@ -7,8 +7,7 @@ import torch.optim as optim
 from collections import namedtuple
 import collections
 import cv2
-# from env.env_aux.point_net import PointNetfeat
-
+import os
 
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
@@ -19,7 +18,7 @@ class DQN_Agent:
             self.env = gym.make(environment_name)
         else:
             self.env = env
-            
+
         torch.cuda.empty_cache() 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.lr = lr
@@ -28,17 +27,18 @@ class DQN_Agent:
         self.target_net.net.load_state_dict(self.policy_net.net.state_dict())  # Copy the weight of the policy network
         self.rm = ReplayMemory(self.env)
         self.burn_in_memory()
-        self.batch_size = 4
+        self.batch_size = 8
         self.gamma = 0.99
         self.c = 0
-
+    
     def burn_in_memory(self):
+        print("=======================================================================")
+        print("Creating and populating the replay memory with a burn_in number of episodes... The process should take around 1 hour with 10000")
         # Initialize replay memory with a burn-in number of episodes/transitions.
         cnt = 0
         terminated = False
         truncated = False
         state, _ = self.env.reset()
-        # state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         state = self.process_state(state)
 
         # Iterate until we store "burn_in" buffer
@@ -51,16 +51,40 @@ class DQN_Agent:
             # Randomly select an action (left or right) and take a step
             action = self.env.action_space.sample()
             next_state, reward, terminated, truncated, _ = self.env.step(action.item())
-            reward = torch.tensor([reward])
+            reward = torch.tensor([reward], device=self.device)
             if terminated:
                 next_state = None
             else:
                 next_state = self.process_state(next_state)
                 
             # Store new experience into memory
-            transition = Transition(state, torch.tensor([[self.env.action_space.sample()]], dtype=torch.long), next_state, reward)
+            transition = Transition(state, torch.tensor([[self.env.action_space.sample()]], dtype=torch.long, device=self.device), next_state, reward)
             self.rm.memory.append(transition)
             state = next_state
+            cnt += 1
+
+        print("Process complete! Initializing training")
+        print("=======================================================================")
+        
+    def __burn_in_memory_stub(self):
+        print("=======================================================================")
+        print("Creating and populating the replay memory with a burn_in number of episodes... The process should take around 1 hour with 10000")
+        # Initialize replay memory with a burn-in number of episodes/transitions.
+        cnt = 0
+        terminated = False
+        truncated = False
+        
+        while cnt < self.rm.burn_in:
+            # Create fake data for state, next_state, action, and reward
+            state = torch.randn(3, 224, 224), torch.randn(7)
+            action = torch.randint(0, self.env.action_space.n, (1,))
+            next_state = torch.randn(3, 224, 224), torch.randn(7)
+            reward = torch.randn(1)
+            
+            # Store new experience into memory
+            transition = Transition(state, action, next_state, reward)
+            self.rm.memory.append(transition)
+            
             cnt += 1
 
     def epsilon_greedy_policy(self, q_values, epsilon=0.05):
@@ -70,7 +94,7 @@ class DQN_Agent:
             with torch.no_grad():
                 return self.greedy_policy(q_values)
         else:
-            return torch.tensor([[self.env.action_space.sample()]], dtype=torch.long)
+            return torch.tensor([[self.env.action_space.sample()]], dtype=torch.long, device=self.device)
 
     def greedy_policy(self, q_values):
         # Implement a greedy policy for test time.
@@ -79,6 +103,7 @@ class DQN_Agent:
     def process_state(self, state):
         # Resize the RGB image to 224x224
         rgb_data = cv2.resize(state['rgb_data'], (224, 224))
+        rgb_data = np.transpose(rgb_data, (2, 0, 1))
         rgb_data = torch.from_numpy(rgb_data).float().to(self.device)
         position = torch.FloatTensor(state['position']).to(self.device)
         situation = torch.FloatTensor([state['situation']]).to(self.device)
@@ -86,55 +111,71 @@ class DQN_Agent:
 
         rest = torch.cat((position, situation, target_position)).to(self.device)
 
+
         return (rgb_data, rest)
         
     def train(self):
         # Train the Q-network using Deep Q-learning.
         state, _ = self.env.reset()
-        state = self.process_state(state)
+        rgb_state, rest_state = self.process_state(state)
         terminated = False
         truncated = False
-
+        print("Episode will start :D")
         # Loop until reaching the termination state
         while not (terminated or truncated):
             with torch.no_grad():
-                q_values = self.policy_net.net(state)
+                q_values = self.policy_net.net((rgb_state, rest_state))
 
             # Decide the next action with epsilon greedy strategy
             action = self.epsilon_greedy_policy(q_values).reshape(1, 1)
             
             # Take action and observe reward and next state
             next_state, reward, terminated, truncated, _ = self.env.step(action.item())
-            reward = torch.tensor([reward])
+            reward = torch.tensor([reward], device=self.device)
             if terminated:
                 next_state = None
             else:
-                next_state = self.process_state(next_state)
+                rgb_next_state, rest_next_state = self.process_state(next_state)
 
             # Store the new experience
-            transition = Transition(state, action, next_state, reward)
+            transition = Transition((rgb_state, rest_state), action, (rgb_next_state, rest_next_state), reward)
             self.rm.memory.append(transition)
 
             # Move to the next state
-            state = next_state
+            rgb_state, rest_state = rgb_next_state, rest_next_state
 
             # Sample minibatch with size N from memory
             transitions = self.rm.sample_batch(self.batch_size)
             batch = Transition(*zip(*transitions))
-            non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), dtype=torch.bool)
-            non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
-            state_batch = torch.cat(batch.state)
-            action_batch = torch.cat(batch.action)
-            reward_batch = torch.cat(batch.reward)
+            non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), dtype=torch.bool, device=self.device) # Shape: torch.Size([8])
+            
+            # non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+            non_final_next_states = tuple(s for s in batch.next_state if s is not None)
+            non_final_rgb_next_states = torch.stack([s[0] for s in non_final_next_states]).to(self.device)
+            non_final_rest_next_states = torch.stack([s[1] for s in non_final_next_states]).to(self.device)
+
+            # state_batch = tuple(batch_state for batch_state in batch.state)
+            # state_batch = torch.cat(batch.state)
+            # TODO: IF IT DOESNT WORK ITS HERE
+            batch_rgb_states = torch.stack([s[0] for s in batch.state]).to(self.device)
+            batch_rest_states = torch.stack([s[1] for s in batch.state]).to(self.device)
+            # batch_rest_states = torch.stack([s[1].view(s[1].size(0), -1) for s in batch.state]).to(self.device)
+
+            # action_batch = torch.cat(batch.action).to(self.device)
+            action_batch = torch.cat(batch.action).to(self.device).unsqueeze(1) # Shape: torch.Size([8, 1])
+            reward_batch = torch.cat(batch.reward).to(self.device)
 
             # Get current and next state values
-            state_action_values = self.policy_net.net(state_batch).gather(1, action_batch) # extract values corresponding to the actions Q(S_t, A_t)
-            next_state_values = torch.zeros(self.batch_size)
-            
+            state_q_values = self.policy_net.net((batch_rgb_states, batch_rest_states)).squeeze(0) # Shape: torch.Size([8, 4]
+            state_action_values = state_q_values.gather(1, action_batch) # extract values corresponding to the actions Q(S_t, A_t)
+            next_state_values = torch.zeros(self.batch_size, device=self.device) # Shape: torch.Size([8])
+
             with torch.no_grad():
+                max_q_value = self.target_net.net((non_final_rgb_next_states, non_final_rest_next_states)).squeeze(0).max(1)[0] # extract max value
                 # no next_state_value update if an episode is terminated (next_satate = None)
                 # only update the non-termination state values (Ref: https://gymnasium.farama.org/tutorials/gymnasium_basics/handling_time_limits/)
-                next_state_values[non_final_mask] = self.target_net.net(non_final_next_states).max(1)[0] # extract max value
+                next_state_values[non_final_mask] = max_q_value
+
                 
             # Update the model
             expected_state_action_values = (next_state_values * self.gamma) + reward_batch
@@ -148,6 +189,8 @@ class DQN_Agent:
             self.c += 1
             if self.c % 50 == 0:
                 self.target_net.net.load_state_dict(self.policy_net.net.state_dict())
+        
+        print("Episode ended!")
     
     def test(self, model_file=None):
         # Evaluates the performance of the agent over 20 episodes.
@@ -212,20 +255,23 @@ class DQNNetwork(nn.Module):
                 if isinstance(sub_layer, nn.Linear) or isinstance(sub_layer, nn.Conv2d):
                     nn.init.xavier_uniform_(sub_layer.weight)
                     nn.init.constant_(sub_layer.bias, 0.0)
+    
+    def forward(self, state):
+        rgb_input = state[0]
+        rest_input = state[1]
 
-    def forward(self, rgb_input, rest_input):
-        # Forward pass through the network
-        print("========= image_features =========")
         image_features = self.model1(rgb_input)
-        image_features = torch.squeeze(image_features)  # Remove dummy dimensions
-        rest_output = self.model3(rest_input)
-        combined_features = torch.cat((image_features, rest_output))
-        return self.final_model(combined_features)
+        image_features = torch.squeeze(image_features).unsqueeze(0)  # Remove dummy dimensions
+        rest_output = self.model3(rest_input).unsqueeze(0)
+
+        combined_features = torch.cat((image_features, rest_output), dim=-1)
+        q_values = self.final_model(combined_features)
+        return q_values # shape: torch.Size([1, 8, 4])
 
 class QNetwork:
     def __init__(self, env, lr, logdir=None):
         # Define Q-network with specified architecture
-        self.net = DQNNetwork(env.action_space.n)
+        self.net = DQNNetwork(env.action_space.n).to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
         self.env = env
         self.lr = lr 
         self.logdir = logdir

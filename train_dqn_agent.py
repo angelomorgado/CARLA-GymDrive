@@ -6,13 +6,13 @@ import numpy as np
 from env.environment import CarlaEnv
 
 # Set environment and training parameters
-num_episodes_train = 10
-num_episodes_test = 20
+num_episodes_train = 5
+num_episodes_test = 2
 learning_rate = 5e-4
-evaluate_every = 1
+evaluate_every = 3
 
 # Create the environment
-env = gym.make('carla-rl-gym-v0', time_limit=55, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=False, has_traffic=False)
+env = gym.make('carla-rl-gym-v0', time_limit=55, verbose=False, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=False, has_traffic=False)
 action_space_size = env.action_space.n
 
 # Plot average performance of 5 trials
@@ -27,21 +27,23 @@ agent = DQN_Agent(env=env, lr=learning_rate)
 
 # Training loop
 for m in range(num_episodes_train):
+    print(f"============================= Train Episode {m} =======================================")
     agent.train()
 
     # Evaluate the agent every 10 episodes during training
     if m % evaluate_every == 0:
-        print("Episode: {}".format(m))
+        print("Evaluation Phase for training episode: {}".format(m))
 
         # Evaluate the agent's performance over 20 test episodes
         G = np.zeros(num_episodes_test)
         for k in range(num_episodes_test):
+            print("Evaluation episode number ", k)
             g = agent.test()
             G[k] = g
 
         reward_mean = G.mean()
         reward_sd = G.std()
-        print(f"The test reward for episode {m} is {reward_mean} with a standard deviation of {reward_sd}.")
+        print(f"The test reward for training episode {m} is {reward_mean} with a standard deviation of {reward_sd}.")
         reward_means.append(reward_mean)
 
 

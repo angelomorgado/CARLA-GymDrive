@@ -2,7 +2,7 @@ from env.environment import CarlaEnv
 from stable_baselines3 import PPO
 import gymnasium as gym
 
-from agent.custom_feature_extractor import CustomCombinedExtractor
+from agent.custom_feature_extractor import CustomExtractor_PPO
 
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, CallbackList, StopTrainingOnMaxEpisodes
 
@@ -29,7 +29,7 @@ def main():
     callback = CallbackList([checkpoint_callback])
     
     policy_kwargs = dict(
-        features_extractor_class=CustomCombinedExtractor,
+        features_extractor_class=CustomExtractor_PPO,
     )
     
     model = PPO(
