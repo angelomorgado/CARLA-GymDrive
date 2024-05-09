@@ -1,8 +1,8 @@
 import gymnasium as gym
-import tqdm
 from agent.dqn import DQN_Agent
 from matplotlib import pyplot as plt
 import numpy as np
+import wandb
 from env.environment import CarlaEnv
 
 def plot_reward(reward_means, ep_i):
@@ -13,6 +13,8 @@ def plot_reward(reward_means, ep_i):
     plt.title('Average Reward over Training Episodes')
     plt.savefig(f'agent/plots/dqn_average_reward_{ep_i}.png')
 
+# Set up wandb
+wandb.init(project='CarlaGym-DQN')
 
 # Set environment and training parameters
 num_episodes_train = 10000
@@ -59,6 +61,9 @@ for m in range(num_episodes_train):
         # Plot graph
         plot_reward(reward_means, m+1)
 
+        # Log metrics to wandb
+        wandb.log({"reward_mean": reward_mean, "reward_std": reward_sd, "episode": m+1})
+
         # Save model
         agent.save_model_weights(f"checkpoints/dqn/dqn_{m+1}_checkpoint.pth")
         print(f"Saved checkpoint dqn_{m+1}_checkpoint.pth!")
@@ -66,3 +71,4 @@ for m in range(num_episodes_train):
 # Save final model
 agent.save_model_weights(f"checkpoints/dqn/dqn_final_agent.pth")
 print(f"Agent finalized training! Saved at checkpoints/dqn/dqn_final_agent.pth")
+wandb.finish()

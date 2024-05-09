@@ -25,7 +25,7 @@ class DQN_Agent:
         self.policy_net = QNetwork(self.env, self.lr)
         self.target_net = QNetwork(self.env, self.lr)
         self.target_net.net.load_state_dict(self.policy_net.net.state_dict())  # Copy the weight of the policy network
-        self.rm = ReplayMemory(self.env, burn_in=100) # TODO fjewqfpojewp
+        self.rm = ReplayMemory(self.env) 
         self.burn_in_memory()
         self.batch_size = 8
         self.gamma = 0.99

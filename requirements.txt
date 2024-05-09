@@ -1,7 +1,7 @@
 carla
 gymnasium
 numpy
-opencv_python
+opencv_python-headless
 Pillow
 pygame
 pynput
@@ -10,3 +10,4 @@ torch
 tensorboard
 tqdm
 rich
+wandb
