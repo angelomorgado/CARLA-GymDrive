@@ -25,11 +25,14 @@ class DQN_Agent:
         self.policy_net = QNetwork(self.env, self.lr)
         self.target_net = QNetwork(self.env, self.lr)
         self.target_net.net.load_state_dict(self.policy_net.net.state_dict())  # Copy the weight of the policy network
-        self.rm = ReplayMemory(self.env)
+        self.rm = ReplayMemory(self.env, burn_in=100) # TODO fjewqfpojewp
         self.burn_in_memory()
         self.batch_size = 8
         self.gamma = 0.99
         self.c = 0
+    
+    def save_model_weights(self, filename):
+        torch.save(self.policy_net.net.state_dict(), filename)
     
     def burn_in_memory(self):
         print("=======================================================================")
@@ -51,7 +54,7 @@ class DQN_Agent:
             # Randomly select an action (left or right) and take a step
             action = self.env.action_space.sample()
             next_state, reward, terminated, truncated, _ = self.env.step(action.item())
-            reward = torch.tensor([reward], device=self.device)
+            reward = torch.tensor([reward], device=self.device, dtype=torch.float32)
             if terminated:
                 next_state = None
             else:
@@ -65,27 +68,6 @@ class DQN_Agent:
 
         print("Process complete! Initializing training")
         print("=======================================================================")
-        
-    def __burn_in_memory_stub(self):
-        print("=======================================================================")
-        print("Creating and populating the replay memory with a burn_in number of episodes... The process should take around 1 hour with 10000")
-        # Initialize replay memory with a burn-in number of episodes/transitions.
-        cnt = 0
-        terminated = False
-        truncated = False
-        
-        while cnt < self.rm.burn_in:
-            # Create fake data for state, next_state, action, and reward
-            state = torch.randn(3, 224, 224), torch.randn(7)
-            action = torch.randint(0, self.env.action_space.n, (1,))
-            next_state = torch.randn(3, 224, 224), torch.randn(7)
-            reward = torch.randn(1)
-            
-            # Store new experience into memory
-            transition = Transition(state, action, next_state, reward)
-            self.rm.memory.append(transition)
-            
-            cnt += 1
 
     def epsilon_greedy_policy(self, q_values, epsilon=0.05):
         # Implement an epsilon-greedy policy. 
@@ -111,7 +93,6 @@ class DQN_Agent:
 
         rest = torch.cat((position, situation, target_position)).to(self.device)
 
-
         return (rgb_data, rest)
         
     def train(self):
@@ -120,7 +101,6 @@ class DQN_Agent:
         rgb_state, rest_state = self.process_state(state)
         terminated = False
         truncated = False
-        print("Episode will start :D")
         # Loop until reaching the termination state
         while not (terminated or truncated):
             with torch.no_grad():
@@ -154,22 +134,17 @@ class DQN_Agent:
             non_final_rgb_next_states = torch.stack([s[0] for s in non_final_next_states]).to(self.device)
             non_final_rest_next_states = torch.stack([s[1] for s in non_final_next_states]).to(self.device)
 
-            # state_batch = tuple(batch_state for batch_state in batch.state)
-            # state_batch = torch.cat(batch.state)
-            # TODO: IF IT DOESNT WORK ITS HERE
             batch_rgb_states = torch.stack([s[0] for s in batch.state]).to(self.device)
             batch_rest_states = torch.stack([s[1] for s in batch.state]).to(self.device)
-            # batch_rest_states = torch.stack([s[1].view(s[1].size(0), -1) for s in batch.state]).to(self.device)
 
-            # action_batch = torch.cat(batch.action).to(self.device)
-            action_batch = torch.cat(batch.action).to(self.device).unsqueeze(1) # Shape: torch.Size([8, 1])
+            action_batch = torch.cat(batch.action).to(self.device) # Shape: torch.Size([8, 1])
             reward_batch = torch.cat(batch.reward).to(self.device)
 
             # Get current and next state values
             state_q_values = self.policy_net.net((batch_rgb_states, batch_rest_states)).squeeze(0) # Shape: torch.Size([8, 4]
-            state_action_values = state_q_values.gather(1, action_batch) # extract values corresponding to the actions Q(S_t, A_t)
-            next_state_values = torch.zeros(self.batch_size, device=self.device) # Shape: torch.Size([8])
-
+            state_action_values = state_q_values.gather(1, action_batch).float() # extract values corresponding to the actions Q(S_t, A_t)
+            next_state_values = torch.zeros(self.batch_size, device=self.device, dtype=torch.float32) # Shape: torch.Size([8])
+        
             with torch.no_grad():
                 max_q_value = self.target_net.net((non_final_rgb_next_states, non_final_rest_next_states)).squeeze(0).max(1)[0] # extract max value
                 # no next_state_value update if an episode is terminated (next_satate = None)
@@ -180,7 +155,7 @@ class DQN_Agent:
             # Update the model
             expected_state_action_values = (next_state_values * self.gamma) + reward_batch
             criterion = torch.nn.MSELoss()
-            loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+            loss = criterion(state_action_values.float(), expected_state_action_values.unsqueeze(1).float())
             self.policy_net.optimizer.zero_grad()
             loss.backward()
             self.policy_net.optimizer.step()
