@@ -17,7 +17,7 @@ def plot_reward(reward_means, ep_i):
 wandb.init(project='CarlaGym-DQN')
 
 # Set environment and training parameters
-num_episodes_train = 10000
+num_episodes_train = 5000
 num_episodes_test = 5
 learning_rate = 5e-4
 evaluate_every = 100
