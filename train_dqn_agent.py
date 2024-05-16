@@ -5,13 +5,13 @@ import numpy as np
 import wandb
 from env.environment import CarlaEnv
 # 
-def plot_reward(reward_means, ep_i):
+def plot_reward(reward_means):
     # Plot the average performance of the agent over the training episodes
     plt.plot(reward_means)
     plt.xlabel('Episode')
     plt.ylabel('Average Reward')
     plt.title('Average Reward over Training Episodes')
-    plt.savefig(f'agent/plots/dqn_average_reward_{ep_i}.png')
+    plt.savefig(f'agent/plots/dqn_average_reward.png')
 
 # Set up wandb
 wandb.init(project='CarlaGym-DQN')
@@ -59,7 +59,7 @@ for m in range(num_episodes_train):
         reward_means.append(reward_mean)
 
         # Plot graph
-        plot_reward(reward_means, m+1)
+        plot_reward(reward_means)
 
         # Log metrics to wandb
         wandb.log({"reward_mean": reward_mean, "reward_std": reward_sd, "episode": m+1})
