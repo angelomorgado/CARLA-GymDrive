@@ -35,6 +35,9 @@ class DQN_Agent:
     def save_model_weights(self, filename):
         torch.save(self.policy_net.net.state_dict(), filename)
     
+    def load_model_weights(self, filename):
+        self.policy_net.net.load_state_dict(torch.load(filename))
+    
     def burn_in_memory(self):
         print("=======================================================================")
         print("Creating and populating the replay memory with a burn_in number of episodes... The process should take around 1 hour with 10000")

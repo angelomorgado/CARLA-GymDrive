@@ -35,6 +35,9 @@ gamma = 0.99
 reward_means = []
 # Create an instance of the DQN_Agent class
 agent = DQN_Agent(env=env, lr=learning_rate)
+# Optional: Load the model weights from a previous checkpoint (there is no checkpoint at the moment)
+# print("Loading model weights from checkpoint...")
+# agent.load_model_weights("checkpoints/dqn/dqn_last_checkpoint.pth")
 
 # Training loop
 for m in range(num_episodes_train):
