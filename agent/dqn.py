@@ -25,9 +25,10 @@ class DQN_Agent:
         self.policy_net = QNetwork(self.env, self.lr)
         self.target_net = QNetwork(self.env, self.lr)
         self.target_net.net.load_state_dict(self.policy_net.net.state_dict())  # Copy the weight of the policy network
-        self.rm = ReplayMemory(self.env) 
+        # Initialize the replay memory with a burn-in number of episodes and with memory size (number of transitions to store)
+        self.rm = ReplayMemory(self.env)
         self.burn_in_memory()
-        self.batch_size = 8
+        self.batch_size = 4
         self.gamma = 0.99
         self.c = 0
     
@@ -160,11 +161,20 @@ class DQN_Agent:
             loss.backward()
             self.policy_net.optimizer.step()
 
+            # Move tensors back to CPU to free up GPU memory
+            state_action_values.cpu()
+            next_state_values.cpu()
+            loss.cpu()
+            expected_state_action_values.cpu()
+
+            # Delete intermediary variables
+            del loss, state_action_values, next_state_values, expected_state_action_values
+
             # Update the target Q-network in each 50 steps
             self.c += 1
             if self.c % 50 == 0:
                 self.target_net.net.load_state_dict(self.policy_net.net.state_dict())
-        
+                torch.cuda.empty_cache()        
         print("Episode ended!")
     
     def test(self, model_file=None):
@@ -239,7 +249,10 @@ class DQNNetwork(nn.Module):
         image_features = torch.squeeze(image_features).unsqueeze(0)  # Remove dummy dimensions
         rest_output = self.model3(rest_input).unsqueeze(0)
 
-        combined_features = torch.cat((image_features, rest_output), dim=-1)
+        try:
+            combined_features = torch.cat((image_features, rest_output), dim=-1)
+        except RuntimeError:
+            combined_features = torch.cat((image_features.unsqueeze(0), rest_output), dim=-1) 
         q_values = self.final_model(combined_features)
         return q_values # shape: torch.Size([1, 8, 4])
 
@@ -270,7 +283,8 @@ class ReplayMemory:
 
     def sample_batch(self, batch_size=32):
         # Returns a batch of randomly sampled transitions to be used for training the model.
-        return random.sample(self.memory, batch_size)
+        batch = random.sample(self.memory, batch_size)
+        return batch
 
     def append(self, transition):
         # Appends a transition to the replay memory.

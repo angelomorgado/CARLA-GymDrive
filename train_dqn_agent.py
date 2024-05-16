@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import wandb
 from env.environment import CarlaEnv
-
+# 
 def plot_reward(reward_means, ep_i):
     # Plot the average performance of the agent over the training episodes
     plt.plot(reward_means)
