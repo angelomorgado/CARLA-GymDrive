@@ -75,3 +75,4 @@ for m in range(num_episodes_train):
 agent.save_model_weights(f"checkpoints/dqn/dqn_final_agent.pth")
 print(f"Agent finalized training! Saved at checkpoints/dqn/dqn_final_agent.pth")
 wandb.finish()
+env.close()

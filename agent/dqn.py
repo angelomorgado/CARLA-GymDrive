@@ -26,7 +26,7 @@ class DQN_Agent:
         self.target_net = QNetwork(self.env, self.lr)
         self.target_net.net.load_state_dict(self.policy_net.net.state_dict())  # Copy the weight of the policy network
         # Initialize the replay memory with a burn-in number of episodes and with memory size (number of transitions to store)
-        self.rm = ReplayMemory(self.env)
+        self.rm = ReplayMemory(self.env, memory_size=10000, burn_in=3000)
         self.burn_in_memory()
         self.batch_size = 4
         self.gamma = 0.99
@@ -115,6 +115,7 @@ class DQN_Agent:
             
             # Take action and observe reward and next state
             next_state, reward, terminated, truncated, _ = self.env.step(action.item())
+            print_reward = reward
             reward = torch.tensor([reward], device=self.device)
             if terminated:
                 next_state = None
@@ -178,7 +179,7 @@ class DQN_Agent:
             if self.c % 50 == 0:
                 self.target_net.net.load_state_dict(self.policy_net.net.state_dict())
                 torch.cuda.empty_cache()        
-        print("Episode ended!")
+        print(f"Episode ended with reward {print_reward}!")
     
     def test(self, model_file=None):
         # Evaluates the performance of the agent over 20 episodes.
