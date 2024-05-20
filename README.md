@@ -12,13 +12,14 @@ If you use Carla GymDrive in your research, please cite using the following cita
   title = {CARLA-GymDrive: Autonomous driving episode generation for the Carla simulator in a gym environment.},
   author = {Ângelo Morgado and Nuno Pombo},
   year = {2024},
-  note = {Contact email: angelo.morgado@ubi.pt}
+  url = {https://github.com/angelomorgado/CARLA-GymDrive},
+  note = {Contact: angelo.morgado@ubi.pt}
 }
 ```
 
 **APA:**
 ```apa
-Morgado, Â., & Pombo, N. (2024). CARLA-GymDrive: Autonomous driving episode generation for the Carla simulator in a gym environment. Contact email: angelo.morgado@ubi.pt
+Morgado, Â., \& Pombo, N. (2024). CARLA-GymDrive: Autonomous driving episode generation for the Carla simulator in a gym environment. email: angelo.morgado@ubi.pt. [Online]. Available: \url{https://github.com/angelomorgado/CARLA-GymDrive}.
 ```
 
 ## Features
