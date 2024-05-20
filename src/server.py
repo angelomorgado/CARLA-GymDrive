@@ -50,6 +50,11 @@ class CarlaServer:
                 print('Carla server closed')
     
     @staticmethod
+    def restart_server(process, low_quality = False, offscreen_rendering = False, silent = False, sleep_time = 10):
+        CarlaServer.close_server(process, silent)
+        return CarlaServer.initialize_server(low_quality, offscreen_rendering, silent, sleep_time)
+    
+    @staticmethod
     def kill_carla_linux():
         if os.name == 'posix':
             os.system('pkill -9 -f CarlaUE4')
