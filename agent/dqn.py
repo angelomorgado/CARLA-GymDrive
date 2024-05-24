@@ -92,10 +92,10 @@ class DQN_Agent:
         rgb_data = np.transpose(rgb_data, (2, 0, 1))
         rgb_data = torch.from_numpy(rgb_data).float().to(self.device)
         position = torch.FloatTensor(state['position']).to(self.device)
-        situation = torch.FloatTensor([state['situation']]).to(self.device)
+        # situation = torch.FloatTensor([state['situation']]).to(self.device)
         target_position = torch.FloatTensor(state['target_position']).to(self.device)
 
-        rest = torch.cat((position, situation, target_position)).to(self.device)
+        rest = torch.cat((position, target_position)).to(self.device)
 
         return (rgb_data, rest)
         
@@ -227,9 +227,9 @@ class DQNNetwork(nn.Module):
             nn.AdaptiveAvgPool2d(1)  # Global average pooling to get a fixed-size feature vector
         )
 
-        # Rest: 7
+        # Rest: 6 -> 256 (position and target_position)
         self.model3 = nn.Sequential(
-            nn.Linear(7, 256),
+            nn.Linear(6, 256),
         )
 
         self.final_model = nn.Sequential(
