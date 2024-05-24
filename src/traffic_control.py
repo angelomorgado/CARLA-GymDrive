@@ -61,6 +61,7 @@ class TrafficControl:
                 vehicle.destroy()
             except RuntimeError as e:
                 continue
+        del self.__active_vehicles[:]
         self.__active_vehicles = []
         if config.VERBOSE:
             print('Destroyed all vehicles!')

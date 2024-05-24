@@ -261,13 +261,6 @@ class CarlaEnv(gym.Env):
         self.__toggle_lights()
 
     def clean_scenario(self):
-        # Every 5000 episodes restart the server so it doesn't crash after its high memory usage
-        if self.__episode_number % self.__restart_every == 0:
-            self.__server_process = CarlaServer.restart_server(low_quality = config.SIM_LOW_QUALITY, offscreen_rendering = config.SIM_OFFSCREEN_RENDERING)
-            self.__first_episode = True
-            print("Server restarted!")
-            return
-        
         self.__vehicle.destroy_vehicle()
         self.__world.destroy_vehicles()
         self.__world.destroy_pedestrians()

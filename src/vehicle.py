@@ -110,9 +110,11 @@ class Vehicle:
         for sensor in self.__sensor_dict:
             self.__sensor_dict[sensor].destroy()
         self.__vehicle.destroy()
+        del self.__sensor_dict, self.__vehicle
         if configuration.VERBOSE:
             print("Successfully destroyed the ego vehicle and its sensors.")
         self.__vehicle = None
+        self.__sensor_dict = {}
 
     # ====================================== Vehicle Sensors ======================================
     def __attach_sensors(self, vehicle_data, world):
