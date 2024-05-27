@@ -87,6 +87,9 @@ try:
         f.write(f"num_seeds: {num_seeds}\n")
 
     print(f"Agent finalized training! Saved at checkpoints/dqn/dqn_final_agent.pth")
+except KeyboardInterrupt:
+    print("Training interrupted by user. Saving model weights...")
+    agent.save_model_weights(f"checkpoints/dqn/dqn_interrupted_agent.pth")
 except Exception as e:
     print(f"Error!!!: {e}")
     traceback.print_exc()
