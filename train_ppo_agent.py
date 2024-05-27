@@ -1,5 +1,5 @@
 import gymnasium as gym
-from agent.dqn import DQN_Agent
+from agent.ppo import PPOAgent
 from matplotlib import pyplot as plt
 import numpy as np
 import wandb
@@ -11,13 +11,13 @@ def plot_reward(reward_means, episodes):
     plt.xlabel('Episode')
     plt.ylabel('Average Reward')
     plt.title('Average Reward over Training Episodes')
-    plt.savefig(f'agent/plots/dqn_average_reward.png')
+    plt.savefig(f'agent/plots/ppo_average_reward.png')
     plt.close()  # Close the figure to free up memory
 
 # Set up wandb
 LOG_IN_WANDB = False
 if LOG_IN_WANDB:
-    wandb.init(project='CarlaGym-DQN')
+    wandb.init(project='CarlaGym-PPO')
     wandb.define_metric("episode")
     wandb.define_metric("reward_mean", step_metric="episode")
     wandb.define_metric("reward_std", step_metric="episode")
@@ -25,24 +25,20 @@ if LOG_IN_WANDB:
 # Set environment and training parameters
 num_episodes_train = 10000
 num_episodes_test = 10
-learning_rate = 5e-4
+lr_actor = 3e-4
+lr_critic = 1e-3
 evaluate_every = 1000
-
-# Set Agent type
-end_to_end_agent = False # If false the agent will be modular (i.e., the perception module will be separated from the decision-making module)
-
-env = gym.make('carla-rl-gym-v0', time_limit=55, verbose=False, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=False, has_traffic=False)
-action_space_size = env.action_space.n
-
-num_seeds = 5
-l = num_episodes_train // 10
-res = np.zeros((num_seeds, l))
+action_std_init = 0.6
 gamma = 0.99
+K_epochs = 80
+eps_clip = 0.2
+
+env = gym.make('carla-rl-gym-v0', time_limit=55, verbose=False, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=True, show_sensor_data=False, has_traffic=False)
 
 reward_means = []
 episodes = []
 
-agent = DQN_Agent(env=env, lr=learning_rate, end_to_end=end_to_end_agent)
+agent = PPOAgent(env=env, lr_actor=lr_actor, lr_critic=lr_critic, gamma=gamma, K_epochs=K_epochs, eps_clip=eps_clip, action_std_init=action_std_init)
 
 try:
     for m in range(num_episodes_train):
@@ -70,26 +66,25 @@ try:
             if LOG_IN_WANDB:
                 wandb.log({"reward_mean": reward_mean, "reward_std": reward_sd, "episode": m+1})
 
-            agent.save_model_weights(f"checkpoints/dqn/dqn_{m+1}_checkpoint.pth")
-            print(f"Saved checkpoint dqn_{m+1}_checkpoint.pth!")
+            agent.save_model(f"checkpoints/ppo/ppo_{m+1}_checkpoint.pth")
+            print(f"Saved checkpoint ppo_{m+1}_checkpoint.pth!")
 
-    agent.save_model_weights(f"checkpoints/dqn/dqn_final_agent.pth")
+    agent.save_model(f"checkpoints/ppo/ppo_final_agent.pth")
 
     with open("logs/last_execution.txt", "w") as f:
         f.write(f"reward_means: {reward_means}\n")
         f.write(f"episodes: {episodes}\n")
         f.write(f"gamma: {gamma}\n")
-        f.write(f"learning_rate: {learning_rate}\n")
+        f.write(f"learning_rate_actor: {lr_actor}\n")
+        f.write(f"learning_rate_critic: {lr_critic}\n")
         f.write(f"num_episodes_train: {num_episodes_train}\n")
         f.write(f"num_episodes_test: {num_episodes_test}\n")
         f.write(f"evaluate_every: {evaluate_every}\n")
-        f.write(f"action_space_size: {action_space_size}\n")
-        f.write(f"num_seeds: {num_seeds}\n")
 
-    print(f"Agent finalized training! Saved at checkpoints/dqn/dqn_final_agent.pth")
+    print(f"Agent finalized training! Saved at checkpoints/ppo/ppo_final_agent.pth")
 except KeyboardInterrupt:
     print("Training interrupted by user. Saving model weights...")
-    agent.save_model_weights(f"checkpoints/dqn/dqn_interrupted_agent.pth")
+    agent.save_model(f"checkpoints/ppo/ppo_interrupted_agent.pth")
 except Exception as e:
     print(f"Error!!!: {e}")
     traceback.print_exc()

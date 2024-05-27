@@ -2,7 +2,7 @@ from env.environment import CarlaEnv
 from stable_baselines3 import PPO
 import gymnasium as gym
 
-from agent.custom_feature_extractor import CustomExtractor_PPO
+from agent.stablebaselines3_ppo_architecture import CustomExtractor_PPO
 
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, CallbackList, StopTrainingOnMaxEpisodes
 

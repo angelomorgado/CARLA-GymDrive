@@ -1,99 +1,194 @@
+import numpy as np
+import random
+import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
-from torch.distributions import Categorical
-from torch.utils.data import DataLoader, TensorDataset
-import numpy as np
+from torch.distributions import MultivariateNormal
+from collections import namedtuple
+import cv2
+import os
+
+Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'log_prob', 'value'))
+
+class RolloutBuffer:
+    def __init__(self):
+        self.clear()
+
+    def clear(self):
+        self.transitions = []
+
+    def add_transition(self, transition):
+        self.transitions.append(transition)
+
+    def sample(self):
+        return self.transitions
 
 class ActorCritic(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_size=64):
+    def __init__(self, output_n, action_dim, action_std_init):
         super(ActorCritic, self).__init__()
-        self.actor = nn.Sequential(
-            nn.Linear(state_dim, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, action_dim),
-            nn.Softmax(dim=-1)
-        )
-        self.critic = nn.Sequential(
-            nn.Linear(state_dim, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, 1)
+
+        self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=True)
+        self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+        self.efficientnet.eval()
+        for param in self.efficientnet.parameters():
+            param.requires_grad = False
+
+        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
+
+        self.rest_model = nn.Sequential(
+            nn.Linear(6, 256),
         )
 
-    def forward(self, x):
-        return self.actor(x), self.critic(x)
+        self.actor = nn.Sequential(
+            nn.Linear(1280 + 256, 512),
+            nn.ReLU(),
+            nn.Linear(512, action_dim),
+            nn.Tanh()
+        )
+
+        self.critic = nn.Sequential(
+            nn.Linear(1280 + 256, 512),
+            nn.ReLU(),
+            nn.Linear(512, 1)
+        )
+
+        self.action_dim = action_dim
+        self.action_var = torch.full((action_dim,), action_std_init * action_std_init)
+
+    def forward(self, state):
+        rgb_input, rest_input = state
+
+        if len(rgb_input.shape) == 3:
+            rgb_input = rgb_input.unsqueeze(0)
+        if len(rest_input.shape) == 1:
+            rest_input = rest_input.unsqueeze(0)
+
+        image_features = self.efficientnet(rgb_input)
+        image_features = self.global_avg_pool(image_features)
+        image_features = torch.flatten(image_features, 1)
+        rest_output = self.rest_model(rest_input)
+
+        combined_features = torch.cat((image_features, rest_output), dim=-1)
+
+        action_mean = self.actor(combined_features)
+        state_value = self.critic(combined_features)
+
+        return action_mean, state_value
 
 class PPOAgent:
-    def __init__(self, state_dim, action_dim, lr=1e-3, gamma=0.99, eps_clip=0.2, clip_value=0.5, batch_size=64,
-                 entropy_coef=0.01, max_grad_norm=0.5):
-        self.actor_critic = ActorCritic(state_dim, action_dim)
-        self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=lr)
+    def __init__(self, environment_name=None, lr_actor=3e-4, lr_critic=1e-3, gamma=0.99, K_epochs=80, eps_clip=0.2, action_std_init=0.6, env=None):
+        if env is None:
+            self.env = gym.make(environment_name)
+        else:
+            self.env = env
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.action_dim = self.env.action_space.shape[0]
+        self.buffer = RolloutBuffer()
         self.gamma = gamma
         self.eps_clip = eps_clip
-        self.clip_value = clip_value
-        self.batch_size = batch_size
-        self.entropy_coef = entropy_coef
-        self.max_grad_norm = max_grad_norm
-        self.last_loss = None
+        self.K_epochs = K_epochs
 
-    def save_model(self, filepath):
-        torch.save(self.actor_critic.state_dict(), filepath)
+        self.policy = ActorCritic(self.env.action_space.shape[0], self.action_dim, action_std_init).to(self.device)
+        self.optimizer = torch.optim.Adam([
+            {'params': self.policy.actor.parameters(), 'lr': lr_actor},
+            {'params': self.policy.critic.parameters(), 'lr': lr_critic}
+        ])
+        self.policy_old = ActorCritic(self.env.action_space.shape[0], self.action_dim, action_std_init).to(self.device)
+        self.policy_old.load_state_dict(self.policy.state_dict())
 
-    def load_model(self, filepath):
-        self.actor_critic.load_state_dict(torch.load(filepath))
+        self.MseLoss = nn.MSELoss()
 
-    def act(self, state):
-        state = torch.FloatTensor(state).unsqueeze(0)
+    def select_action(self, state):
+        rgb_state, rest_state = self.process_state(state)
         with torch.no_grad():
-            action_probs, _ = self.actor_critic(state)
-        dist = Categorical(action_probs)
-        action = dist.sample()
-        return action.item()
+            action_mean, state_value = self.policy_old((rgb_state, rest_state))
+            cov_mat = torch.diag(self.policy.action_var).unsqueeze(dim=0).to(self.device)
+            dist = MultivariateNormal(action_mean, cov_mat)
+            action = dist.sample()
+            action_logprob = dist.log_prob(action)
 
-    def train(self, state, action, reward, next_state, terminated, truncated):
-        dataset = TensorDataset(state, action, reward, next_state, terminated, truncated)
-        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        self.buffer.add_transition(Transition((rgb_state, rest_state), action, None, None, action_logprob, state_value))
 
-        for state, action, reward, next_state, done, truncated in dataloader:
-            action_probs, value = self.actor_critic(state)
-            dist = Categorical(action_probs)
-            entropy = dist.entropy().mean()
+        return action.cpu().numpy().flatten()
 
-            new_log_prob = dist.log_prob(action.squeeze(-1))
-            old_dist = Categorical(torch.exp(new_log_prob.detach()))
-            old_log_prob = old_dist.log_prob(action.squeeze(-1))
-            ratio = torch.exp(new_log_prob - old_log_prob)
-            clipped_ratio = torch.clamp(ratio, 1 - self.eps_clip, 1 + self.eps_clip)
+    def process_state(self, state):
+        rgb_data = cv2.resize(state['rgb_data'], (224, 224))
+        rgb_data = np.transpose(rgb_data, (2, 0, 1))
+        rgb_data = torch.from_numpy(rgb_data).float().to(self.device)
+        position = torch.FloatTensor(state['position']).to(self.device)
+        target_position = torch.FloatTensor(state['target_position']).to(self.device)
+        rest = torch.cat((position, target_position)).to(self.device)
+        return (rgb_data, rest)
 
-            advantage = self.__calculate_advantage(state, reward, next_state, done)
-            actor_loss = -torch.min(ratio * advantage, clipped_ratio * advantage).mean()
-            critic_loss = F.mse_loss(value.squeeze(-1), self.__calculate_td_target(reward, next_state, done))
-            loss = actor_loss + critic_loss - self.entropy_coef * entropy
+    def update(self):
+        transitions = self.buffer.sample()
+        batch = Transition(*zip(*transitions))
+
+        rewards = []
+        discounted_reward = 0
+        for reward in reversed(batch.reward):
+            discounted_reward = reward + (self.gamma * discounted_reward)
+            rewards.insert(0, discounted_reward)
+
+        rewards = torch.tensor(rewards, dtype=torch.float32).to(self.device)
+        rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-7)
+
+        old_states = (
+            torch.stack([s[0] for s in batch.state]).detach().to(self.device),
+            torch.stack([s[1] for s in batch.state]).detach().to(self.device)
+        )
+        old_actions = torch.stack(batch.action).detach().to(self.device)
+        old_logprobs = torch.stack(batch.log_prob).detach().to(self.device)
+        old_state_values = torch.stack(batch.value).detach().to(self.device)
+
+        advantages = rewards.detach() - old_state_values.detach()
+
+        for _ in range(self.K_epochs):
+            action_mean, state_values = self.policy(old_states)
+            cov_mat = torch.diag(self.policy.action_var).unsqueeze(dim=0).to(self.device)
+            dist = MultivariateNormal(action_mean, cov_mat)
+
+            logprobs = dist.log_prob(old_actions)
+            dist_entropy = dist.entropy()
+            state_values = state_values.squeeze()
+
+            ratios = torch.exp(logprobs - old_logprobs.detach())
+
+            surr1 = ratios * advantages
+            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
+
+            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy
 
             self.optimizer.zero_grad()
-            loss.backward()
-            if self.max_grad_norm is not None:
-                torch.nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
+            loss.mean().backward()
             self.optimizer.step()
 
-        self.last_loss = loss.item()
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.buffer.clear()
 
-    def __calculate_td_target(self, reward, next_state, terminated):
-        with torch.no_grad():
-            next_value = self.actor_critic(next_state)[1]
-            mask = torch.tensor(1 - terminated, dtype=torch.float32)
-            td_target = reward + self.gamma * next_value * mask
-        return td_target
+    def train(self, max_episodes=1000):
+        for episode in range(max_episodes):
+            state, _ = self.env.reset()
+            while True:
+                action = self.select_action(state)
+                next_state, reward, terminated, truncated, _ = self.env.step(action)
+                reward = torch.tensor([reward], device=self.device)
 
-    def __calculate_advantage(self, state, reward, next_state, terminated):
-        with torch.no_grad():
-            next_value = self.actor_critic(next_state)[1]
-            mask = torch.tensor(1 - terminated, dtype=torch.float32)
-            td_target = reward + self.gamma * next_value * mask
-            value = self.actor_critic(state)[1]
-            advantage = td_target - value.squeeze(-1)
-        return advantage
+                self.buffer.transitions[-1] = self.buffer.transitions[-1]._replace(next_state=self.process_state(next_state), reward=reward)
 
-    def get_loss(self):
-        return self.last_loss
+                state = next_state
+
+                if terminated or truncated:
+                    break
+
+            self.update()
+            print(f"Episode {episode} completed")
+
+    def save_model(self, filename):
+        torch.save(self.policy_old.state_dict(), filename)
+
+    def load_model(self, filename):
+        self.policy_old.load_state_dict(torch.load(filename))
+        self.policy.load_state_dict(torch.load(filename))

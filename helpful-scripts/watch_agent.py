@@ -6,7 +6,7 @@ from env.environment import CarlaEnv
 from stable_baselines3 import PPO
 import gymnasium as gym
 
-from agent.custom_feature_extractor import CustomCombinedExtractor
+from agent.stablebaselines3_ppo_architecture import CustomCombinedExtractor
 
 from stable_baselines3.common.evaluation import evaluate_policy
 
