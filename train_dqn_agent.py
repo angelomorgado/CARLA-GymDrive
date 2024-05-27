@@ -28,6 +28,9 @@ num_episodes_test = 10
 learning_rate = 5e-4
 evaluate_every = 1000
 
+# Set Agent type
+end_to_end_agent = False # If false the agent will be modular (i.e., the perception module will be separated from the decision-making module)
+
 env = gym.make('carla-rl-gym-v0', time_limit=55, verbose=False, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=False, has_traffic=False)
 action_space_size = env.action_space.n
 
@@ -39,7 +42,7 @@ gamma = 0.99
 reward_means = []
 episodes = []
 
-agent = DQN_Agent(env=env, lr=learning_rate)
+agent = DQN_Agent(env=env, lr=learning_rate, end_to_end=end_to_end_agent)
 
 try:
     for m in range(num_episodes_train):

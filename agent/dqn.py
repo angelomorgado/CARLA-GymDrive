@@ -12,7 +12,7 @@ import os
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
 class DQN_Agent:
-    def __init__(self, environment_name=None, lr=5e-4, render=False, env=None):
+    def __init__(self, environment_name=None, lr=5e-4, render=False, env=None, end_to_end=False):
         # Initialize the DQN Agent.
         if env is None:
             self.env = gym.make(environment_name)
@@ -22,11 +22,11 @@ class DQN_Agent:
         torch.cuda.empty_cache() 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.lr = lr
-        self.policy_net = QNetwork(self.env, self.lr)
-        self.target_net = QNetwork(self.env, self.lr)
+        self.policy_net = QNetwork(self.env, self.lr, end_to_end=end_to_end)
+        self.target_net = QNetwork(self.env, self.lr, end_to_end=end_to_end)
         self.target_net.net.load_state_dict(self.policy_net.net.state_dict())  # Copy the weight of the policy network
         # Initialize the replay memory with a burn-in number of episodes and with memory size (number of transitions to store)
-        self.rm = ReplayMemory(self.env, memory_size=10000, burn_in=3000)
+        self.rm = ReplayMemory(self.env, memory_size=5000, burn_in=500)
         self.burn_in_memory()
         self.batch_size = 4
         self.gamma = 0.99
@@ -201,31 +201,27 @@ class DQN_Agent:
         return np.sum(rewards)
 
 class DQNNetwork(nn.Module):
-    def __init__(self, output_n):
+    def __init__(self, output_n, end_to_end=False):
         super(DQNNetwork, self).__init__()
 
-        # Define the neural network architecture
-        # RGB: (224, 224) -> 512
-        self.model1 = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.AdaptiveAvgPool2d(1)  # Global average pooling to get a fixed-size feature vector
-        )
+        # Feature Extractor Model
+        # Load EfficientNet model from NVIDIA Torch Hub
+        self.efficientnet = None
+        if not end_to_end:
+            self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=True)
+            # Take out the last layer of the EfficientNet model to get the features
+            self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+            self.efficientnet.eval()
+            for param in self.efficientnet.parameters():
+                param.requires_grad = False  # Freeze the EfficientNet parameters if not training end-to-end so that they are not updated
+        else:
+            self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
+            # Take out the last layer of the EfficientNet model to get the features
+            self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+            self.efficientnet.train()
+        
+        # Add adaptive average pooling to reduce the spatial dimensions to 1x1
+        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
 
         # Rest: 6 -> 256 (position and target_position)
         self.model3 = nn.Sequential(
@@ -233,26 +229,26 @@ class DQNNetwork(nn.Module):
         )
 
         self.final_model = nn.Sequential(
-            nn.Linear(512 + 256, 512),  # Combine image and rest features, output 512-dimensional vector
+            nn.Linear(1280 + 256, 512),  # Combine image and rest features, output 512-dimensional vector
             nn.ReLU(),
             nn.Linear(512, output_n)
         )
 
-        # Initialization using Xavier uniform
-        for layer in [self.model1, self.model3, self.final_model]:
-            for sub_layer in layer:
-                if isinstance(sub_layer, nn.Linear) or isinstance(sub_layer, nn.Conv2d):
-                    nn.init.xavier_uniform_(sub_layer.weight)
-                    nn.init.constant_(sub_layer.bias, 0.0)
-    
     def forward(self, state):
         rgb_input = state[0]
         rest_input = state[1]
+        
+        # Add a batch dimension to the input if it doesn't have one
+        if len(rgb_input.shape) == 3:
+            rgb_input = rgb_input.unsqueeze(0)
+        if len(rest_input.shape) == 1:
+            rest_input = rest_input.unsqueeze(0)
 
-        image_features = self.model1(rgb_input)
-        image_features = torch.squeeze(image_features).unsqueeze(0)  # Remove dummy dimensions
+        image_features = self.efficientnet(rgb_input)
+        image_features = self.global_avg_pool(image_features)  # Shape: (1, 1280, 1, 1)
+        image_features = torch.flatten(image_features, 1)  # Shape: (1, 1280)
         rest_output = self.model3(rest_input).unsqueeze(0)
-
+        
         try:
             combined_features = torch.cat((image_features, rest_output), dim=-1)
         except RuntimeError:
@@ -261,9 +257,9 @@ class DQNNetwork(nn.Module):
         return q_values # shape: torch.Size([1, 8, 4])
 
 class QNetwork:
-    def __init__(self, env, lr, logdir=None):
+    def __init__(self, env, lr, logdir=None, end_to_end=False):
         # Define Q-network with specified architecture
-        self.net = DQNNetwork(env.action_space.n).to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+        self.net = DQNNetwork(env.action_space.n, end_to_end=end_to_end).to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
         self.env = env
         self.lr = lr 
         self.logdir = logdir
