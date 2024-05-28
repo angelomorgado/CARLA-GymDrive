@@ -4,3 +4,5 @@ src/__pycache__/
 env/__pycache__/
 agent/__pycache__/
 *.py[cod]
+logs/
+ppo_av_tensorboard/

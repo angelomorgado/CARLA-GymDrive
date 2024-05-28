@@ -51,19 +51,27 @@ class CustomExtractor_DQN(BaseFeaturesExtractor):
         
         rest_output = self.model3(rest_input)
         
-        combined_features = torch.cat((image_features, rest_output), dim=1)
-        return self.final_model(combined_features)
-
-    def process_observations(self, state):
-        rgb_data = cv2.resize(state['rgb_data'], (224, 224))
-        rgb_data = cv2.normalize(rgb_data, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-        rgb_data = torch.from_numpy(rgb_data).float().permute(2, 0, 1).unsqueeze(0).to(self.device)
-
-        position = torch.FloatTensor(state['position']).to(self.device)
-        target_position = torch.FloatTensor(state['target_position']).to(self.device)
-
-        rest = torch.cat((position, target_position)).unsqueeze(0).to(self.device)
+        if len(rest_output.shape) == 1:
+            rest_output = rest_output.unsqueeze(0)
         
+        combined_features = torch.cat((image_features, rest_output), dim=1)
+        
+        return combined_features
+        # return self.final_model(combined_features)
+    
+    def process_observations(self, observations):
+        rgb_data = F.interpolate(observations['rgb_data'], size=(224, 224), mode='bilinear', align_corners=False)
+        # Normalize the pixel values to be in the range [0, 1]
+        rgb_data = cv2.normalize(rgb_data.cpu().numpy(), None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+        rgb_data = torch.from_numpy(rgb_data).float().to(self.device)
+
+        position = observations['position'].squeeze()
+        target_position = observations['target_position'].squeeze()
+        if len(position.shape) == 1:
+            position = position.unsqueeze(0)
+            target_position = target_position.unsqueeze(0)
+        rest = torch.cat((position,target_position),dim=1).to(self.device)
+      
         return (rgb_data, rest)
 
 # ================== PPO ==================
