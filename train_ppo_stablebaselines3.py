@@ -2,12 +2,12 @@ from env.environment import CarlaEnv
 from stable_baselines3 import PPO
 import gymnasium as gym
 
-from agent.stablebaselines3_ppo_architecture import CustomExtractor_PPO
+from agent.stablebaselines3_architectures import CustomExtractor_PPO
 
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, CallbackList, StopTrainingOnMaxEpisodes
 
 def main():
-    env = gym.make('carla-rl-gym-v0', time_limit=55, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=True, show_sensor_data=True, has_traffic=False)
+    env = gym.make('carla-rl-gym-v0', time_limit=55, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=True, show_sensor_data=False, has_traffic=False)
     
     # Stable baselines callback
     # Save a checkpoint every 1000 steps
