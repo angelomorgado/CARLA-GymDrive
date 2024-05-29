@@ -182,13 +182,11 @@ class DQN_Agent:
         print(f"Episode ended with reward {print_reward}!")
     
     def test(self, model_file=None):
-        # Evaluates the performance of the agent over 20 episodes.
-
-        max_t = 1000
+        # Test 1 episode of the agent
         state, _ = self.env.reset()
         rewards = []
 
-        for t in range(max_t):
+        while True:
             state = self.process_state(state)
             with torch.no_grad():
                 q_values = self.policy_net.net(state)
