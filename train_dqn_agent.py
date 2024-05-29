@@ -23,10 +23,10 @@ if LOG_IN_WANDB:
     wandb.define_metric("reward_std", step_metric="episode")
 
 # Set environment and training parameters
-num_episodes_train = 10000
+num_episodes_train = 5000
 num_episodes_test = 10
 learning_rate = 5e-4
-evaluate_every = 1000
+evaluate_every = 100
 
 # Set Agent type
 end_to_end_agent = False # If false the agent will be modular (i.e., the perception module will be separated from the decision-making module)
@@ -90,6 +90,16 @@ try:
 except KeyboardInterrupt:
     print("Training interrupted by user. Saving model weights...")
     agent.save_model_weights(f"checkpoints/dqn/dqn_interrupted_agent.pth")
+    with open("logs/last_execution.txt", "w") as f:
+        f.write(f"reward_means: {reward_means}\n")
+        f.write(f"episodes: {episodes}\n")
+        f.write(f"gamma: {gamma}\n")
+        f.write(f"learning_rate: {learning_rate}\n")
+        f.write(f"num_episodes_train: {num_episodes_train}\n")
+        f.write(f"num_episodes_test: {num_episodes_test}\n")
+        f.write(f"evaluate_every: {evaluate_every}\n")
+        f.write(f"action_space_size: {action_space_size}\n")
+        f.write(f"num_seeds: {num_seeds}\n")
 except Exception as e:
     print(f"Error!!!: {e}")
     traceback.print_exc()

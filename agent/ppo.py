@@ -185,7 +185,23 @@ class PPOAgent:
 
             self.update()
             print(f"Episode {episode} completed")
+    
+    def test(self):
+        # Test the agent for 1 episode and return the total reward
+        state, _ = self.env.reset()
+        rewards = []
+        
+        while True:
+            action = self.select_action(state)
+            next_state, reward, terminated, truncated, _ = self.env.step(action)
+            rewards.append(reward)
+            state = next_state
 
+            if terminated or truncated:
+                break
+        
+        return np.sum(rewards)
+        
     def save_model(self, filename):
         torch.save(self.policy_old.state_dict(), filename)
 
