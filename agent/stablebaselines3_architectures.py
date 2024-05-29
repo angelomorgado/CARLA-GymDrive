@@ -11,7 +11,7 @@ import numpy as np
 
 # ================== DQN ==================
 class CustomExtractor_DQN(BaseFeaturesExtractor):
-    def __init__(self, observation_space: gym.spaces.Dict):
+    def __init__(self, observation_space: gym.spaces.Dict, end_to_end: bool = False):
         # Compute the combined feature dimension
         image_dim = 1280  # Dimensionality of the EfficientNet features
         rest_dim = 256    # Dimensionality of the rest features
@@ -22,11 +22,17 @@ class CustomExtractor_DQN(BaseFeaturesExtractor):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Load EfficientNet model from NVIDIA Torch Hub
-        self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=True)
-        self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
-        self.efficientnet.eval()
-        for param in self.efficientnet.parameters():
-            param.requires_grad = False  # Freeze the EfficientNet parameters
+        self.efficientnet = None
+        if not end_to_end:
+            self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=True)
+            self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+            self.efficientnet.eval()
+            for param in self.efficientnet.parameters():
+                param.requires_grad = False  # Freeze the EfficientNet parameters
+        else:
+            self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
+            self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+            self.efficientnet.train()
 
         # Add adaptive average pooling to reduce the spatial dimensions to 1x1
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -76,7 +82,7 @@ class CustomExtractor_DQN(BaseFeaturesExtractor):
 
 # ================== PPO ==================
 class CustomExtractor_PPO(BaseFeaturesExtractor):
-    def __init__(self, observation_space: spaces.Dict):
+    def __init__(self, observation_space: spaces.Dict, end_to_end: bool = False):
         # Compute the combined feature dimension
         image_dim = 1280  # Dimensionality of the EfficientNet features
         rest_dim = 256   # Dimensionality of the rest features
@@ -88,11 +94,17 @@ class CustomExtractor_PPO(BaseFeaturesExtractor):
         self.action_dim = continuous_action_space.shape[0]  # Dimensionality of the action space
 
         # Load EfficientNet model from NVIDIA Torch Hub
-        self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=True)
-        self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
-        self.efficientnet.eval()
-        for param in self.efficientnet.parameters():
-            param.requires_grad = False  # Freeze the EfficientNet parameters
+        self.efficientnet = None
+        if not end_to_end:
+            self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=True)
+            self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+            self.efficientnet.eval()
+            for param in self.efficientnet.parameters():
+                param.requires_grad = False  # Freeze the EfficientNet parameters
+        else:
+            self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
+            self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+            self.efficientnet.train()
 
         # Add adaptive average pooling to reduce the spatial dimensions to 1x1
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
