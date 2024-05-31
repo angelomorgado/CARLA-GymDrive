@@ -93,6 +93,17 @@ class DQN_Agent:
         # Implement a greedy policy for test time.
         return torch.argmax(q_values)
 
+    def act(self, state):
+        # Process the state into the required format
+        processed_state = self.process_state(state)
+        
+        # Select an action using the policy network
+        with torch.no_grad():
+            q_values = self.policy_net.net(processed_state)
+        
+        action = self.greedy_policy(q_values)
+        return action.item()  # Convert tensor to an integer action
+
     def process_state(self, state):
         # Resize the RGB image to 224x224
         rgb_data = cv2.resize(state['rgb_data'], (224, 224))

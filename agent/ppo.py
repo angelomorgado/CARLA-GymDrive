@@ -25,14 +25,22 @@ class RolloutBuffer:
         return self.transitions
 
 class ActorCritic(nn.Module):
-    def __init__(self, output_n, action_dim, action_std_init):
+    def __init__(self, output_n, action_dim, action_std_init, end_to_end=False):
         super(ActorCritic, self).__init__()
 
-        self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=True)
-        self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
-        self.efficientnet.eval()
-        for param in self.efficientnet.parameters():
-            param.requires_grad = False
+        self.efficientnet = None
+        if not end_to_end:
+            self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=True)
+            # Take out the last layer of the EfficientNet model to get the features
+            self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+            self.efficientnet.eval()
+            for param in self.efficientnet.parameters():
+                param.requires_grad = False  # Freeze the EfficientNet parameters if not training end-to-end so that they are not updated
+        else:
+            self.efficientnet = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
+            # Take out the last layer of the EfficientNet model to get the features
+            self.efficientnet = nn.Sequential(*list(self.efficientnet.children())[:-1])
+            self.efficientnet.train()
 
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
 
@@ -77,7 +85,7 @@ class ActorCritic(nn.Module):
         return action_mean, state_value
 
 class PPOAgent:
-    def __init__(self, environment_name=None, lr_actor=3e-4, lr_critic=1e-3, gamma=0.99, K_epochs=80, eps_clip=0.2, action_std_init=0.6, env=None):
+    def __init__(self, environment_name=None, lr_actor=3e-4, lr_critic=1e-3, gamma=0.99, K_epochs=80, eps_clip=0.2, action_std_init=0.6, env=None, end_to_end=False):
         if env is None:
             self.env = gym.make(environment_name)
         else:
@@ -90,12 +98,12 @@ class PPOAgent:
         self.eps_clip = eps_clip
         self.K_epochs = K_epochs
 
-        self.policy = ActorCritic(self.env.action_space.shape[0], self.action_dim, action_std_init).to(self.device)
+        self.policy = ActorCritic(self.env.action_space.shape[0], self.action_dim, action_std_init, end_to_end=end_to_end).to(self.device)
         self.optimizer = torch.optim.Adam([
             {'params': self.policy.actor.parameters(), 'lr': lr_actor},
             {'params': self.policy.critic.parameters(), 'lr': lr_critic}
         ])
-        self.policy_old = ActorCritic(self.env.action_space.shape[0], self.action_dim, action_std_init).to(self.device)
+        self.policy_old = ActorCritic(self.env.action_space.shape[0], self.action_dim, action_std_init, end_to_end=end_to_end).to(self.device)
         self.policy_old.load_state_dict(self.policy.state_dict())
 
         self.MseLoss = nn.MSELoss()
@@ -112,6 +120,9 @@ class PPOAgent:
         self.buffer.add_transition(Transition((rgb_state, rest_state), action, None, None, action_logprob, state_value))
 
         return action.cpu().numpy().flatten()
+
+    def act(self, state):
+        return self.select_action(state)
 
     def process_state(self, state):
         rgb_data = cv2.resize(state['rgb_data'], (224, 224))
