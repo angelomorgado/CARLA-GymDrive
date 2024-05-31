@@ -12,7 +12,7 @@ import os
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
 class DQN_Agent:
-    def __init__(self, environment_name=None, lr=5e-4, render=False, env=None, end_to_end=False):
+    def __init__(self, environment_name=None, lr=5e-4, render=False, env=None, end_to_end=False, epsilon_start=1.0, epsilon_end=0.05, episodes=5000):
         # Initialize the DQN Agent.
         if env is None:
             self.env = gym.make(environment_name)
@@ -31,6 +31,13 @@ class DQN_Agent:
         self.batch_size = 4
         self.gamma = 0.99
         self.c = 0
+
+        # Epsilon decay parameters
+        self.epsilon_start = epsilon_start
+        self.epsilon_end = epsilon_end
+        self.epsilon = epsilon_start
+        self.episodes = episodes
+        self.epsilon_decay = (epsilon_end / epsilon_start) ** (1.0 / episodes)
     
     def save_model_weights(self, filename):
         torch.save(self.policy_net.net.state_dict(), filename)
@@ -73,10 +80,10 @@ class DQN_Agent:
         print("Process complete! Initializing training")
         print("=======================================================================")
 
-    def epsilon_greedy_policy(self, q_values, epsilon=0.05):
-        # Implement an epsilon-greedy policy. 
+    def epsilon_greedy_policy(self, q_values):
+        # Implement an epsilon-greedy policy using the decaying epsilon value.
         p = random.random()
-        if p > epsilon:
+        if p > self.epsilon:
             with torch.no_grad():
                 return self.greedy_policy(q_values)
         else:
@@ -178,9 +185,13 @@ class DQN_Agent:
             self.c += 1
             if self.c % 50 == 0:
                 self.target_net.net.load_state_dict(self.policy_net.net.state_dict())
-                torch.cuda.empty_cache()        
-        print(f"Episode ended with reward {print_reward}!")
-    
+                torch.cuda.empty_cache()
+        
+        # Decay epsilon after each episode
+        self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
+        
+        print(f"Episode ended with reward {print_reward}! Epsilon is now {self.epsilon}")
+
     def test(self, model_file=None):
         # Test 1 episode of the agent
         state, _ = self.env.reset()
@@ -197,6 +208,7 @@ class DQN_Agent:
                 break
 
         return np.sum(rewards)
+
 
 class DQNNetwork(nn.Module):
     def __init__(self, output_n, end_to_end=False):
