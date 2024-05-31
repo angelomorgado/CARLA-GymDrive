@@ -6,3 +6,4 @@ agent/__pycache__/
 *.py[cod]
 logs/
 ppo_av_tensorboard/
+test_agent.py
