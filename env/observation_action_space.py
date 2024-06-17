@@ -26,7 +26,7 @@ observation_space = spaces.Dict({
 })
 
 # For continuous actions
-continuous_action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]), dtype=np.float32)
+continuous_action_space = spaces.Box(low=np.array([-1.0, 0.0]), high=np.array([1.0, 1.0]), dtype=np.float32)
 
 # For discrete actions
 discrete_action_space = spaces.Discrete(4)
