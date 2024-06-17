@@ -25,8 +25,8 @@ observation_space = spaces.Dict({
     'situation': spaces.Discrete(observation_shapes['num_of_stuations'])
 })
 
-# For continuous actions
-continuous_action_space = spaces.Box(low=np.array([-1.0, 0.0]), high=np.array([1.0, 1.0]), dtype=np.float32)
+# For continuous actions (steering [-1.0, 1.0], throttle/brake [-1.0, 1.0])
+continuous_action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]), dtype=np.float32)
 
-# For discrete actions
+# For discrete actions (accelerate, deaccelerate, turn left, turn right)
 discrete_action_space = spaces.Discrete(4)
