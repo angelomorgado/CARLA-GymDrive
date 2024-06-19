@@ -169,7 +169,7 @@ class Vehicle:
     # ====================================== Vehicle Physics ======================================
 
     # Change the vehicle physics to a determined weather that is stated in the JSON file.
-    def change_vehicle_physics(self, weather_condition):
+    def __change_vehicle_physics(self, weather_condition):
         # Read JSON file
         physics_data = self.__read_vehicle_file(configuration.VEHICLE_PHYSICS_FILE)
 
@@ -198,6 +198,13 @@ class Vehicle:
         self.__vehicle.apply_physics_control(physics_control)
         if configuration.VERBOSE:
             print(f"Vehicle's physics changed to {weather_condition} weather")
+    
+    def adapt_to_weather(self, weather_condition):
+        # Change the vehicle physics depending on the weather condition
+        if "rain" in weather_condition.lower() or "wet" in weather_condition.lower():
+            self.__change_vehicle_physics("wet")
+        else:
+            self.__change_vehicle_physics("dry")
 
     def print_vehicle_physics(self):
         vehicle_physics = self.__vehicle.get_physics_control()

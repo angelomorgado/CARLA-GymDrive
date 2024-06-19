@@ -60,9 +60,13 @@ class World:
         for idx, weather in enumerate(self.weather_list):
             print(f'{idx}: {weather[1]}')
 
-    def set_active_weather_preset(self, weather):
+    # If a vehicle is passed, it will adapt its physics to the weather.
+    def set_active_weather_preset(self, weather, vehicle=None):
         self.__weather_control.set_active_weather_preset(weather)
+        if vehicle is not None:
+            vehicle.adapt_to_weather(weather)
     
+    # Random weather does not alter the vehicle's physics, it only changes the visual aspect of the simulation.
     def set_random_weather(self):
         self.__weather_control.set_random_weather_preset()
 
