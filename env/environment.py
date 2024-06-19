@@ -100,7 +100,7 @@ class CarlaEnv(gym.Env):
         # Variables to store the current state
         self.__active_scenario_name = None
         self.__active_scenario_dict = None
-
+        self.__waypoints = None # List of waypoints to the target
         self.__situations_map = env.observation_action_space.situations_map
 
         # Auxiliar variables
@@ -131,6 +131,9 @@ class CarlaEnv(gym.Env):
         # 3. Place the spectator
         self.place_spectator_above_vehicle()
         
+        # 4. Get list of waypoints to the target from the starting position
+        self.__waypoints = self.get_path_waypoints(spacing=config.ENV.WAYPOINT_SPACING)
+        
         # 4. Get the initial state (Get the observation data)
         time.sleep(0.5)
         self.__update_observation()
@@ -142,7 +145,7 @@ class CarlaEnv(gym.Env):
         
         self.number_of_steps = 0
         # Return the observation and the scenario information
-        return self.__observation, self.__active_scenario_dict
+        return self.__observation, (self.__active_scenario_dict, self.__waypoints)
     
     def render(self, mode='human'):
         if mode == 'human':
@@ -200,14 +203,12 @@ class CarlaEnv(gym.Env):
     def __update_observation(self):        
         observation_space = self.__vehicle.get_observation_data()
         rgb_image = observation_space['rgb_data']
-        # lidar_point_cloud = observation_space['lidar_data']
         current_position = observation_space['gnss_data']
         target_position = np.array([self.__active_scenario_dict['target_gnss']['lat'], self.__active_scenario_dict['target_gnss']['lon'], self.__active_scenario_dict['target_gnss']['alt']])
         situation = self.__situations_map[self.__active_scenario_dict['situation']]
 
         observation = {
             'rgb_data': np.uint8(rgb_image),
-            # 'lidar_data': np.float32(lidar_point_cloud),
             'position': np.float32(current_position),
             'target_position': np.float32(target_position),
             'situation': situation
@@ -363,7 +364,7 @@ class CarlaEnv(gym.Env):
     def __start_timer(self):
         self.start_time = time.time()
     
-    def get_waypoints_with_spacing(self, spacing=5.0):
+    def get_path_waypoints(self, spacing=5.0):
         current_location = self.__vehicle.get_location()
         map_ = self.__map
         target_location = carla.Location(x=self.__active_scenario_dict['target_position']['x'], y=self.__active_scenario_dict['target_position']['y'], z=self.__active_scenario_dict['target_position']['z'])
@@ -381,6 +382,9 @@ class CarlaEnv(gym.Env):
             current_waypoint = current_waypoint.next(spacing)[0]
         
         return waypoints[1:] # Take out the first waypoint because it is the starting point
+    
+    def get_vehicle(self):
+        return self.__vehicle
         
     # ===================================================== DEBUG METHODS =====================================================
     def place_spectator_above_vehicle(self):

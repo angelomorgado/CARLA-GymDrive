@@ -26,15 +26,20 @@ def env_test():
             
             # Spectator Debugging
             env.place_spectator_above_vehicle()
-            
+            vehicle_loc = env.get_vehicle().get_location()
             # Waypoint Debugging
             # env.output_waypoints_to_target()
-            waypoints = env.get_waypoints_with_spacing()
+            waypoints = env.get_path_waypoints(spacing=7.0)
             env.draw_waypoints(waypoints)
+            print(distance(waypoints[0], vehicle_loc))
 
         except KeyboardInterrupt:
             env.close()
             break
+        
+# Function that calculates the distance between two Location objects
+def distance(loc1, loc2):
+    return ((loc1.x - loc2.x)**2 + (loc1.y - loc2.y)**2 + (loc1.z - loc2.z)**2)**0.5
 
 if __name__ == '__main__':
     env_test()

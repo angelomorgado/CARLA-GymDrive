@@ -35,7 +35,7 @@ class CustomEvalCallback(EvalCallback):
         return (self.eval_results, self.episode_numbers)
 
 def main():
-    env = gym.make('carla-rl-gym-v0', time_limit=55, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=True, show_sensor_data=False, has_traffic=False, verbose=False)
+    env = gym.make('carla-rl-gym-v0', time_limit=55, initialize_server=True, random_weather=False, synchronous_mode=True, continuous=True, show_sensor_data=False, has_traffic=False, verbose=False)
     
     checkpoint_callback = CheckpointCallback(
         save_freq=10000,
