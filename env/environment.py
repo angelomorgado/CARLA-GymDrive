@@ -133,6 +133,8 @@ class CarlaEnv(gym.Env):
         
         # 4. Get list of waypoints to the target from the starting position
         self.__waypoints = self.get_path_waypoints(spacing=config.ENV_WAYPOINT_SPACING)
+        # Turn each waypoint into a list of 3 elements
+        self.__waypoints = [np.array([w.x, w.y, w.z]) for w in self.__waypoints]
         
         # 4. Get the initial state (Get the observation data)
         time.sleep(0.5)
@@ -218,7 +220,7 @@ class CarlaEnv(gym.Env):
         vehicle_loc = self.__vehicle.get_location()
         current_position = np.array([vehicle_loc.x, vehicle_loc.y, vehicle_loc.z])
         target_position = np.array([self.__active_scenario_dict['target_position']['x'], self.__active_scenario_dict['target_position']['y'], self.__active_scenario_dict['target_position']['z']])
-        next_waypoint_position = np.array([self.__waypoints[0].x, self.__waypoints[0].y, self.__waypoints[0].z])
+        next_waypoint_position = np.array([self.__waypoints[0][0], self.__waypoints[0][1], self.__waypoints[0][2]])
         speed = np.array([self.__vehicle.get_speed()])
         situation = self.__situations_map[self.__active_scenario_dict['situation']]
 
