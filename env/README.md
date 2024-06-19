@@ -195,7 +195,7 @@ self.observation_space = spaces.Dict({
 \* The Situations are: 0: Road, 1: Roundabout, 2: Junction, 3: Tunnel
 However you can customize this by changing the dictionary and the number of situations variable.
 
-To  change the observation space you can do it at the file [observation_action_space.py](../env/observation_action_space.py).
+To  change the observation space you need to change the file [observation_action_space.py](../env/observation_action_space.py); and then go to the [CarlaEnv](../env/environment.py) class and change the `__update_observation` method.
 
 ### Action Space
 

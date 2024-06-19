@@ -7,6 +7,8 @@ observation_shapes = {
     # 'lidar_data': (3, 500), 
     'position': (3,),
     'target_position': (3,),
+    'next_waypoint_position': (3,),
+    'speed': (1,),
     'num_of_stuations': 4
 }
 
@@ -22,6 +24,8 @@ observation_space = spaces.Dict({
     # 'lidar_data': spaces.Box(low=-np.inf, high=np.inf, shape=observation_shapes['lidar_data'], dtype=np.float32),
     'position': spaces.Box(low=-np.inf, high=np.inf, shape=observation_shapes['position'], dtype=np.float32),
     'target_position': spaces.Box(low=-np.inf, high=np.inf, shape=observation_shapes['target_position'], dtype=np.float32),
+    'next_waypoint_position': spaces.Box(low=-np.inf, high=np.inf, shape=observation_shapes['next_waypoint_position'], dtype=np.float32),
+    'speed': spaces.Box(low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),
     'situation': spaces.Discrete(observation_shapes['num_of_stuations'])
 })
 

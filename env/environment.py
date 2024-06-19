@@ -132,7 +132,7 @@ class CarlaEnv(gym.Env):
         self.place_spectator_above_vehicle()
         
         # 4. Get list of waypoints to the target from the starting position
-        self.__waypoints = self.get_path_waypoints(spacing=config.ENV.WAYPOINT_SPACING)
+        self.__waypoints = self.get_path_waypoints(spacing=config.ENV_WAYPOINT_SPACING)
         
         # 4. Get the initial state (Get the observation data)
         time.sleep(0.5)
@@ -143,9 +143,15 @@ class CarlaEnv(gym.Env):
         self.__start_timer()
         print("Episode started!")
         
+        # 6. Make information about the scenario available
+        info = {
+            'scenario_name': self.__active_scenario_name,
+            'waypoints': self.__waypoints,
+        }
+        
         self.number_of_steps = 0
         # Return the observation and the scenario information
-        return self.__observation, (self.__active_scenario_dict, self.__waypoints)
+        return self.__observation, info
     
     def render(self, mode='human'):
         if mode == 'human':
@@ -182,8 +188,14 @@ class CarlaEnv(gym.Env):
             exit(0)
         if self.__truncated or terminated:
             self.clean_scenario()
-        # 5. Return the observation, the reward, the terminated flag and the scenario information
-        return self.__observation, reward, terminated, self.__truncated, self.__active_scenario_dict
+        
+        # 6. Make information about the scenario available
+        info = {
+            'scenario_name': self.__active_scenario_name,
+            'waypoints': self.__waypoints,
+        }
+        
+        return self.__observation, reward, terminated, self.__truncated, info
 
     # Closes everything, more precisely, destroys the vehicle, along with its sensors, destroys every npc and then destroys the world
     def close(self):
@@ -203,14 +215,19 @@ class CarlaEnv(gym.Env):
     def __update_observation(self):        
         observation_space = self.__vehicle.get_observation_data()
         rgb_image = observation_space['rgb_data']
-        current_position = observation_space['gnss_data']
-        target_position = np.array([self.__active_scenario_dict['target_gnss']['lat'], self.__active_scenario_dict['target_gnss']['lon'], self.__active_scenario_dict['target_gnss']['alt']])
+        vehicle_loc = self.__vehicle.get_location()
+        current_position = np.array([vehicle_loc.x, vehicle_loc.y, vehicle_loc.z])
+        target_position = np.array([self.__active_scenario_dict['target_position']['x'], self.__active_scenario_dict['target_position']['y'], self.__active_scenario_dict['target_position']['z']])
+        next_waypoint_position = np.array([self.__waypoints[0].x, self.__waypoints[0].y, self.__waypoints[0].z])
+        speed = np.array([self.__vehicle.get_speed()])
         situation = self.__situations_map[self.__active_scenario_dict['situation']]
 
         observation = {
             'rgb_data': np.uint8(rgb_image),
             'position': np.float32(current_position),
             'target_position': np.float32(target_position),
+            'next_waypoint_position': np.float32(next_waypoint_position),
+            'speed': np.float32(speed),
             'situation': situation
         }
         
