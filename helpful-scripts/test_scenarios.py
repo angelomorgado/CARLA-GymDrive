@@ -1,3 +1,6 @@
+'''
+This script allows you to test all the chosen scenarios, and it also outputs the path the ego vehicle should take to reach the target.
+'''
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -25,8 +28,9 @@ def env_test():
             env.place_spectator_above_vehicle()
             
             # Waypoint Debugging
-            # env.output_waypoints(d=5.0)
-            env.output_waypoints_to_target()
+            # env.output_waypoints_to_target()
+            waypoints = env.get_waypoints_with_spacing()
+            env.draw_waypoints(waypoints)
 
         except KeyboardInterrupt:
             env.close()

@@ -362,20 +362,8 @@ class CarlaEnv(gym.Env):
     
     def __start_timer(self):
         self.start_time = time.time()
-        
-    # ===================================================== DEBUG METHODS =====================================================
-    def place_spectator_above_vehicle(self):
-        self.__world.place_spectator_above_location(self.__vehicle.get_location())    
-
-    def output_all_waypoints(self, spacing=5):
-        waypoints = self.__map.generate_waypoints(distance=spacing)
-
-        for w in waypoints:
-            self.__world.get_world().debug.draw_string(w.transform.location, 'O', draw_shadow=False,
-                                       color=carla.Color(r=255, g=0, b=0), life_time=120.0,
-                                       persistent_lines=True)
-            
-    def output_waypoints_to_target(self, spacing=5):
+    
+    def get_waypoints_with_spacing(self, spacing=5.0):
         current_location = self.__vehicle.get_location()
         map_ = self.__map
         target_location = carla.Location(x=self.__active_scenario_dict['target_position']['x'], y=self.__active_scenario_dict['target_position']['y'], z=self.__active_scenario_dict['target_position']['z'])
@@ -391,9 +379,23 @@ class CarlaEnv(gym.Env):
         while current_waypoint.transform.location.distance(target_waypoint.transform.location) > spacing:
             waypoints.append(current_waypoint.transform.location)
             current_waypoint = current_waypoint.next(spacing)[0]
+        
+        return waypoints[1:] # Take out the first waypoint because it is the starting point
+        
+    # ===================================================== DEBUG METHODS =====================================================
+    def place_spectator_above_vehicle(self):
+        self.__world.place_spectator_above_location(self.__vehicle.get_location())    
 
-        # Draw the waypoints
+    def output_all_waypoints(self, spacing=5):
+        waypoints = self.__map.generate_waypoints(distance=spacing)
+
+        for w in waypoints:
+            self.__world.get_world().debug.draw_string(w.transform.location, 'O', draw_shadow=False,
+                                       color=carla.Color(r=255, g=0, b=0), life_time=120.0,
+                                       persistent_lines=True)
+
+    def draw_waypoints(self, waypoints, life_time=10.0):
         for w in waypoints:
             self.__world.get_world().debug.draw_string(w, 'O', draw_shadow=False,
-                                                    color=carla.Color(r=255, g=0, b=0), life_time=10.0,
+                                                    color=carla.Color(r=255, g=0, b=0), life_time=life_time,
                                                     persistent_lines=True)
