@@ -8,8 +8,10 @@ from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback,
 import numpy as np
 import wandb
 
+LOG_IN_WANDB = False
+END2END = True
+
 # Set up wandb
-LOG_IN_WANDB = True
 if LOG_IN_WANDB:
     wandb.init(project='CarlaGym-DQN-v2')
     wandb.define_metric("episode")
@@ -52,9 +54,16 @@ def main():
     
     callback = CallbackList([checkpoint_callback, eval_callback, callback_max_episodes])
     
-    policy_kwargs = dict(
-        features_extractor_class=CustomExtractor_PPO_Modular,
-    )
+    policy_kwargs = None
+    
+    if not END2END:
+        policy_kwargs = dict(
+            features_extractor_class=CustomExtractor_PPO_Modular,
+        )
+    else:
+        policy_kwargs = dict(
+            features_extractor_class=CustomExtractor_PPO_End2end,
+        )
     
     model = PPO(
         policy="MultiInputPolicy",
