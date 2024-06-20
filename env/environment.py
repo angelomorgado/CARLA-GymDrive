@@ -48,7 +48,7 @@ from src.server import CarlaServer
 from src.vehicle import Vehicle
 from src.display import Display
 import configuration as config
-from env.reward import calculate_reward
+from env.reward import Reward
 import env.observation_action_space
 from env.pre_processing import PreProcessing
 
@@ -102,6 +102,7 @@ class CarlaEnv(gym.Env):
         self.__active_scenario_dict = None
         self.__waypoints = None # List of waypoints to the target
         self.__situations_map = env.observation_action_space.situations_map
+        self.__reward_func = Reward()
 
         # Auxiliar variables
         self.__first_episode = True
@@ -140,12 +141,15 @@ class CarlaEnv(gym.Env):
         time.sleep(0.5)
         self.__update_observation()
         
-        # 5. Start the timer
+        # 5. Start the reward function
+        self.__reward_func.reset(self.__waypoints)
+        
+        # 6. Start the timer
         self.__episode_number += 1
         self.__start_timer()
         print("Episode started!")
         
-        # 6. Make information about the scenario available
+        # 7. Make information about the scenario available
         info = {
             'scenario_name': self.__active_scenario_name,
             'waypoints': self.__waypoints,
@@ -180,7 +184,10 @@ class CarlaEnv(gym.Env):
         # 2. Update the observation
         self.__update_observation()
         # 3. Calculate the reward
-        reward, terminated = calculate_reward(self.__vehicle, self.__world, self.__map, self.__active_scenario_dict, self.number_of_steps, self.__time_limit_reached)
+        reward = self.__reward_func.calculate_reward(self.__vehicle, self.__reward_current_pos, self.__reward_target_pos, self.__reward_next_waypoint_pos, self.__reward_speed)
+        terminated = self.__reward_func.get_terminated()
+        self.__waypoints = self.__reward_func.get_waypoints()
+        
         # 5. Check if the episode is truncated
         try:
             self.__truncated = self.__timer_truncated()
@@ -234,6 +241,12 @@ class CarlaEnv(gym.Env):
         }
         
         self.__observation = self.pre_processing.preprocess_data(observation)
+        
+        # Aux variables for the reward function so the information that is given to the ego vehicle and to the reward function is the same no matter what happens
+        self.__reward_target_pos = target_position
+        self.__reward_current_pos = current_position
+        self.__reward_next_waypoint_pos = next_waypoint_position
+        self.__reward_speed = speed[0]
 
     # ===================================================== SCENARIO METHODS =====================================================
     def load_scenario(self, scenario_name, seed=None):

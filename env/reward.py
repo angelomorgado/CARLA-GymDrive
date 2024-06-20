@@ -1,169 +1,253 @@
+'''
+Reward Function
+
+This is the file where the reward function can be customized. If you need more information than the provided please also change it in the environment.py file.
+
+I made the reward function based on this data:
+- FPS: 30
+- Ticks/Steps per second: 100
+- Episode time: 30 seconds
+- Maximum number of ticks/steps: 3000
+'''
 from src.vehicle import Vehicle
 from src.world import World
 import configuration as config
 import carla
 import numpy as np
 
-terminated = False
-inside_stop_area = False
-has_stopped = False
-current_steering = 0.0
-current_throttle = 0.0
+# ======================================== Global Variables =================================================================
+class Reward:
+    def __init__(self) -> None:
+        self.terminated       = False
+        self.inside_stop_area = False
+        self.has_stopped      = False
+        self.current_steering = 0.0
+        self.current_throttle = 0.0
+        self.waypoints        = []        
+        
+        self.countint = 0
 
-# ======================================== Main Reward Function ==========================================================
-# If you change this function's signature, you must change the signature of the function in the environment.py file!!
-# def calculate_reward(vehicle: Vehicle, world: World, map: carla.Map, scenario_dict, num_steps: int, time_limit_reached: bool) -> float:
-#     global terminated
-#     vehicle_location = vehicle.get_location()
-#     waypoint = map.get_waypoint(vehicle_location, project_to_road=True, lane_type=carla.LaneType.Driving)
-#     reward_lambdas = config.ENV_REWARDS_LAMBDAS
-#     terminated = False
-    
-#     return reward_lambdas['orientation'] * __get_orientation_reward(waypoint, vehicle) + \
-#            reward_lambdas['distance'] * __get_distance_reward(waypoint, vehicle_location) + \
-#            reward_lambdas['speed'] * __get_speed_reward(vehicle) + \
-#            reward_lambdas['destination'] * __get_destination_reward(vehicle_location, scenario_dict, num_steps) + \
-#            reward_lambdas['collision'] * __get_collision_reward(vehicle) + \
-#            reward_lambdas['light_pole_transgression'] * __get_light_pole_trangression_reward(map, vehicle, world) + \
-#            reward_lambdas['stop_sign_transgression'] * __get_stop_sign_reward(vehicle, map) + \
-#            reward_lambdas['time_limit'] * __get_time_limit_reward(time_limit_reached) + \
-#            reward_lambdas['time_driving'] * __get_time_driving_reward(vehicle), terminated
-
-def calculate_reward(vehicle: Vehicle, world: World, map: carla.Map, scenario_dict, num_steps: int, time_limit_reached: bool) -> float:
-    global terminated, current_steering, current_throttle
-    vehicle_location = vehicle.get_location()
-    waypoint = map.get_waypoint(vehicle_location, project_to_road=True, lane_type=carla.LaneType.Driving)
-    reward_lambdas = config.ENV_REWARDS_LAMBDAS
-    terminated = False
-    
-    return reward_lambdas['orientation'] * __get_orientation_reward(waypoint, vehicle) + \
-           reward_lambdas['throttle_jerk'] * __penalize_low_throttle(vehicle) + \
-           reward_lambdas['steering_jerk'] * __penalize_steering_jerk(vehicle) + \
-           reward_lambdas['speed'] * __get_speed_reward(vehicle) + \
-           reward_lambdas['collision'] * __get_collision_reward(vehicle) + \
-           reward_lambdas['time_driving'] * __get_time_driving_reward(vehicle), terminated
-
-# ============================================= Reward Functions ==========================================================
-# This reward is based on the orientation of the vehicle according to the waypoint of where the vehicle is
-# R_orientation = \lambda * cos(\theta), where \theta is the angle between the vehicle and the waypoint
-def __get_orientation_reward(waypoint, vehicle):
-    vh_yaw = __correct_yaw(vehicle.get_vehicle().get_transform().rotation.yaw)
-    wp_yaw = __correct_yaw(waypoint.transform.rotation.yaw)
-
-    return np.cos((vh_yaw - wp_yaw)*np.pi/180.)
-
-# This reward is based on the distance between the vehicle and the waypoint
-def __get_distance_reward(waypoint, vehicle_location):
-    x_wp = waypoint.transform.location.x
-    y_wp = waypoint.transform.location.y
-
-    x_vehicle = vehicle_location.x
-    y_vehicle = vehicle_location.y
-
-    return np.linalg.norm([x_wp - x_vehicle, y_wp - y_vehicle])
-
-def __get_speed_reward(vehicle, speed_limit=50):
-    vehicle_speed = vehicle.get_speed()
-    return vehicle_speed - speed_limit if vehicle_speed > speed_limit else 0.0
-
-# This reward is based on if the vehicle reached the destination. the reward will be based on the number of steps taken to reach the destination. The less steps, the higher the reward, but reaching the destination is the highest reward
-def __get_destination_reward(current_position, scenario_dict, num_steps, threshold=2.0): 
-    global terminated
-    current_position = np.array([current_position.x, current_position.y, current_position.z])
-    target_position = (scenario_dict['target_position']['x'], scenario_dict['target_position']['y'], scenario_dict['target_position']['z'])
-    
-    if np.linalg.norm(current_position - target_position) < threshold:
-        terminated = True
-        return max(num_steps * (1 / config.ENV_MAX_STEPS) + 1, 0.35)
-    else:
-        return 0
-
-# Collision with other vehicles or pedestrians and even lane invasions
-def __get_collision_reward(vehicle):
-    global terminated
-    if vehicle.collision_occurred() or vehicle.lane_invasion_occurred():
-        terminated = True
-        return 1
-    else:
-        return 0
-    
-def __penalize_steering_jerk(vehicle, threshold=0.2):
-    global current_steering
-    steering_diff = abs(vehicle.get_steering() - current_steering)
-    current_steering = vehicle.get_steering()
-    return 1.0 if steering_diff > threshold else 0.0
-
-def __penalize_low_throttle(vehicle, threshold=0.1):
-    global current_throttle
-    throttle_diff = abs(vehicle.get_throttle_brake() - current_throttle)
-    current_throttle = vehicle.get_throttle_brake()
-    return 1.0 if throttle_diff > threshold else 0.0
-    
-def __get_light_pole_trangression_reward(map, vehicle, world):
-    # Get the current waypoint of the vehicle
-    current_waypoint = map.get_waypoint(vehicle.get_location(), project_to_road=True)
-
-    # Get the traffic lights affecting the current waypoint
-    traffic_lights = world.get_world().get_traffic_lights_from_waypoint(current_waypoint, distance=10.0)
-
-    for traffic_light in traffic_lights:
-        # Check if the traffic light is red
-        if traffic_light.get_state() == carla.TrafficLightState.Red:
-            # Get the stop waypoints for the traffic light
-            stop_waypoints = traffic_light.get_stop_waypoints()
-
-            # Check if the vehicle has passed the stop line
-            for stop_waypoint in stop_waypoints:
-                if current_waypoint.transform.location.distance(stop_waypoint.transform.location) < 2.0 and vehicle.get_speed() > 0.1:
-                    return 1
-
-    return 0
-
-def __get_stop_sign_reward(vehicle, map):
-    global inside_stop_area, has_stopped, terminated        
-    distance = 20.0  # meters (adjust as needed)
-    
-    current_location = vehicle.get_location()
-    current_waypoint = map.get_waypoint(current_location, project_to_road=True)
-    
-    # Get all the stop sign landmarks within a certain distance from the vehicle and on the same road
-    stop_signs_on_same_road = []
-    for landmark in current_waypoint.get_landmarks_of_type(distance, carla.LandmarkType.StopSign):
-        landmark_waypoint = map.get_waypoint(landmark.transform.location, project_to_road=True)
-        if landmark_waypoint.road_id == current_waypoint.road_id:
-            stop_signs_on_same_road.append(landmark)
-
-    if len(stop_signs_on_same_road) == 0:
-        if inside_stop_area and has_stopped:
-            print("Vehicle has stopped at the stop sign.")
-            has_stopped = False
-            inside_stop_area = False
+    # ======================================== Main Reward Function ==========================================================
+    def calculate_reward(self, vehicle: Vehicle, current_pos, target_pos, next_waypoint_pos, speed) -> float:   
+        target_distance = self.distance(current_pos, target_pos)
+        next_waypoint_distance = self.distance(current_pos, next_waypoint_pos)
+        
+        if self.terminated:
+            self.countint += 1
+            print("The episode already ended!!!, count: ", self.countint)
+        
+        return self.__collision_reward(vehicle) + \
+            self.__steering_jerk(vehicle) + \
+            self.__throttle_brake_jerk(vehicle) + \
+            self.__speed_reward(speed) + \
+            self.__target_destination(target_distance) + \
+            self.__waypoint_reached(next_waypoint_distance)
+        
+    # ============================================= Reward Functions ==========================================================
+    def __collision_reward(self, vehicle):
+        '''
+        This reward function penalizes the vehicle if it collides with anything or if it leaves its lane. The reward is calculated as follows:
+        {
+            0.0     : if no collision/lane invasion occurred,
+            -lambda : if collision/lane invasion occurred
+        }
+        
+        Based on the calculations, the max reward for this function is 0 and the min reward is -10;
+        lambda = 20
+        '''
+        lbd = 20
+        if vehicle.collision_occurred() or vehicle.lane_invasion_occurred():
+            self.terminated = True
+            return -lbd
+        else:
             return 0
-        elif inside_stop_area and not has_stopped:
-            print("Vehicle has not stopped at the stop sign.")
-            has_stopped = False
-            inside_stop_area = False
-            return 1
-        else:            
-            return 0
-    else:
-        inside_stop_area = True
+        
+    def __steering_jerk(self, vehicle, threshold=0.2):
+        '''
+        This reward function aims to minimize the sudden changes in the steering value of the vehicle. The reward is calculated as follows:
+        {
+            0.0     : if the steering value difference is less than the threshold,
+            -lambda : if the steering value difference is greater or equal than the threshold
+        }
+        
+        Based on the calculations, the max reward for this function is 0 and the min reward is -10;
+        lambda = 1/300
+        '''
+        lbd = 1/300
+        steering_diff = abs(vehicle.get_steering() - self.current_steering)
+        self.current_steering = vehicle.get_steering()
+        return -lbd if steering_diff > threshold else 0.0
 
-    # The vehicle entered the stop sign area
-    for stop_sign in stop_signs_on_same_road:
-        # Check if the vehicle has stopped
-        if vehicle.get_speed() < 1.0:
-            has_stopped = True
+    def __throttle_brake_jerk(self, vehicle, threshold=0.1):
+        '''
+        This reward function aims to minimize the sudden changes in the throttle/brake of the vehicle. The reward is calculated as follows:
+        {
+            0.0     : if the throttle/brake difference is less than the threshold,
+            -lambda : if the throttle/brake difference is greater or equal than the threshold
+        }
+        
+        Based on the calculations, the max reward for this function is 0 and the min reward is -10;
+        lambda = 1/300
+        '''
+        lbd = 1/300
+        throttle_diff = abs(vehicle.get_throttle_brake() - self.current_throttle)
+        self.current_throttle = vehicle.get_throttle_brake()
+        return -lbd if throttle_diff > threshold else 0.0
 
-# TODO: I think it's not working properly
-def __get_time_limit_reward(time_limit_reached):
-    return 1 if time_limit_reached else 0
+    def __speed_reward(self, speed, speed_limit=50):
+        '''
+        This reward function is based on the speed of the vehicle. It aims to keep the vehicle at a good speed while preventing it from going over the speed limit. The reward is calculated as follows:
+        {
+            0       : if speed < 2,
+            lambda  : if speed >= 2
+            -lambda : if speed > speed_limit
+        }
+        
+        Based on precise calculations the max reward for this function is 15 and the min reward is -15.
+        lambda = 1/200
+        '''
+        lbd = 1/200
+        
+        if speed < 2:
+            return 0.0
+        elif speed >= 2 and speed <= speed_limit:
+            return lbd
+        else:
+            return -lbd
 
-def __get_time_driving_reward(vehicle):
-    global terminated
-    return 1 if not terminated and vehicle.get_speed() > 2.0 else 0
+    def __target_destination(self, target_distance, threshold=5.0):
+        '''
+        This function rewards the vehicle more generously the closer it gets to the target, and, if it reaches the target, it gives an incredibly high reward, as to tell him that it arrived. The reward is calculated as follows:
+        {
+            100                                : if distance <= threshold,
+            (-7 * distance + 395) / (9 * 3000) : if 5 < distance <= 50,   # More accentuated reward for being closer to the target
+            (100 - distance) / (10 * 3000)     : if 50 < distance <= 100, # Less accentuated reward for being further from the target
+            0                                  : if distance > 100
+        }
+        
+        Based on precise calculations the max reward for this function is 100 and the min reward is 0.
+        '''
+        if target_distance <= threshold:
+            self.terminated = True
+            return 100.0
+        elif target_distance > threshold and target_distance <= 50.0:
+            return (-7.0*target_distance + 395.0) / (9.0 * 3000.0)
+        elif target_distance > 50.0 and target_distance <= 100.0:
+            return (100.0 - target_distance) / (10.0 * 3000.0)
+        else:
+            return 0.0
+        
+    def __waypoint_reached(self, next_waypoint_distance, threshold=1.0):
+        '''
+        This reward function gives the agent points if it reaches a waypoint. The reward is calculated as follows:
+        {
+            2  : if distance < threshold,
+            0  : if distance >= threshold
+        }
+        
+        Based on precise calculations the max reward for this function is (2 * n_waypoints) and the min reward is 0.
+        
+        After the waypoint is reached, it is deleted from the waypoint list (it is the first element). 
+        '''
+        if next_waypoint_distance < threshold:
+            self.waypoints.pop(0)
+            return 2.0
+        else:
+            return 0.0
+        
+    def __light_pole_trangression(self, map, vehicle, world):
+        '''
+        This reward function penalizes the agent if it doesn't stop at a stop sign. The reward is calculated as follows:
+        {
+            0       : if the vehicle stops at the stop sign,
+            -lambda : if the vehicle doesn't stop at the stop sign
+        }
+        
+        Based on precise calculations the max reward for this function is 0 and the min reward is -20.
+        '''
+        lbd = 20.0
+        
+        # Get the current waypoint of the vehicle
+        current_waypoint = map.get_waypoint(vehicle.get_location(), project_to_road=True)
 
-# ==================================== Helper Functions ================================================================
-# This function is used to correct the yaw angle to be between 0 and 360 degrees
-def __correct_yaw(x):
-    return(((x%360) + 360) % 360)
+        # Get the traffic lights affecting the current waypoint
+        traffic_lights = world.get_world().get_traffic_lights_from_waypoint(current_waypoint, distance=10.0)
+
+        for traffic_light in traffic_lights:
+            # Check if the traffic light is red
+            if traffic_light.get_state() == carla.TrafficLightState.Red:
+                # Get the stop waypoints for the traffic light
+                stop_waypoints = traffic_light.get_stop_waypoints()
+
+                # Check if the vehicle has passed the stop line
+                for stop_waypoint in stop_waypoints:
+                    if current_waypoint.transform.location.distance(stop_waypoint.transform.location) < 2.0 and vehicle.get_speed() > 0.3:
+                        self.terminated = True
+                        return -lbd
+
+        return 0.0
+
+    def __stop_sign_transgression(self, vehicle, map):
+        '''
+        This reward function penalizes the agent if it doesn't stop at a stop sign. The reward is calculated as follows:
+        {
+            0       : if the vehicle stops at the stop sign,
+            -lambda : if the vehicle doesn't stop at the stop sign
+        }
+        
+        Based on precise calculations the max reward for this function is 0 and the min reward is -20.
+        '''
+        lbd = 20.0
+        distance = 20.0  # meters (adjust as needed)
+        
+        current_location = vehicle.get_location()
+        current_waypoint = map.get_waypoint(current_location, project_to_road=True)
+        
+        # Get all the stop sign landmarks within a certain distance from the vehicle and on the same road
+        stop_signs_on_same_road = []
+        for landmark in current_waypoint.get_landmarks_of_type(distance, carla.LandmarkType.StopSign):
+            landmark_waypoint = map.get_waypoint(landmark.transform.location, project_to_road=True)
+            if landmark_waypoint.road_id == current_waypoint.road_id:
+                stop_signs_on_same_road.append(landmark)
+
+        if len(stop_signs_on_same_road) == 0:
+            if self.inside_stop_area and self.has_stopped:
+                print("Vehicle has stopped at the stop sign.")
+                self.has_stopped = False
+                self.inside_stop_area = False
+                return 0
+            elif self.inside_stop_area and not self.has_stopped:
+                print("Vehicle has not stopped at the stop sign.")
+                self.has_stopped = False
+                self.inside_stop_area = False
+                self.terminated = True
+                return -lbd
+            else:            
+                return 0.0
+        else:
+            self.inside_stop_area = True
+
+        # The vehicle entered the stop sign area
+        for stop_sign in stop_signs_on_same_road:
+            # Check if the vehicle has stopped
+            if vehicle.get_speed() < 1.0:
+                self.has_stopped = True
+        
+    # ==================================== Helper Functions ================================================================
+    # Distance function between two lists of 3 points
+    def distance(self, a, b):
+        return np.linalg.norm(a - b)
+
+    def get_waypoints(self):
+        return self.waypoints
+    
+    def reset(self, waypoints):
+        self.terminated = False
+        self.inside_stop_area = False
+        self.has_stopped = False
+        self.current_steering = 0.0
+        self.current_throttle = 0.0
+        self.waypoints = waypoints
+    
+    def get_terminated(self):
+        return self.terminated
