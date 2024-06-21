@@ -1,9 +1,7 @@
 '''
 This script is used to show how to use the environment by running a few episodes or steps.
 '''
-
-import time
-from env.environment import CarlaEnv
+from env.environment import CarlaEnv # It is mandatory to import the environment even if it is not used in this script
 import gymnasium as gym
 
 def steps_main():
@@ -24,7 +22,7 @@ def steps_main():
 
 def episodes_main():
     # env = CarlaEnv('carla-rl-gym-v0', time_limit=10, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
-    env = gym.make('carla-rl-gym-v0', time_limit=10, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
+    env = gym.make('carla-rl-gym-v0', time_limit=30, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
 
     # Number of episodes
     for i in range(2):

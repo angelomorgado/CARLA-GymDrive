@@ -226,6 +226,7 @@ class CarlaEnv(gym.Env):
     def __update_observation(self):        
         observation_space = self.__vehicle.get_observation_data()
         rgb_image = observation_space['rgb_data']
+        lidar_data = observation_space['lidar_data']
         vehicle_loc = self.__vehicle.get_location()
         current_position = np.array([vehicle_loc.x, vehicle_loc.y, vehicle_loc.z])
         target_position = np.array([self.__active_scenario_dict['target_position']['x'], self.__active_scenario_dict['target_position']['y'], self.__active_scenario_dict['target_position']['z']])
@@ -235,6 +236,7 @@ class CarlaEnv(gym.Env):
 
         observation = {
             'rgb_data': np.uint8(rgb_image),
+            'lidar_data': np.float32(lidar_data),
             'position': np.float32(current_position),
             'target_position': np.float32(target_position),
             'next_waypoint_position': np.float32(next_waypoint_position),
