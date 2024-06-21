@@ -9,14 +9,14 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecTransposeImage
 import numpy as np
 import wandb
 
-LOG_IN_WANDB = False
+LOG_IN_WANDB = True
 END2END = True
 NUM_EPISODES = 15000
 EVALUATE_EVERY = 1000
 
 # Set up wandb
 if LOG_IN_WANDB:
-    wandb.init(project='CarlaGym-DQN-v2')
+    wandb.init(project='CarlaGym-phase2')
     wandb.define_metric("episode")
     wandb.define_metric("reward_mean", step_metric="episode")
 
