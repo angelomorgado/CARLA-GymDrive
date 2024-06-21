@@ -36,18 +36,18 @@ import carla
 
 import gymnasium as gym
 from gymnasium.envs.registration import register
+import configuration as config
 
 register(
     id="carla-rl-gym-v0", # name-version
     entry_point="env.environment:CarlaEnv",
-    max_episode_steps=10000,
+    max_episode_steps=config.ENV_MAX_STEPS,
 )
 
 from src.world import World
 from src.server import CarlaServer
 from src.vehicle import Vehicle
 from src.display import Display
-import configuration as config
 from env.reward import Reward
 import env.observation_action_space
 from env.pre_processing import PreProcessing
@@ -147,7 +147,7 @@ class CarlaEnv(gym.Env):
         # 6. Start the timer
         self.__episode_number += 1
         self.__start_timer()
-        print("Episode started!")
+        print(f"Episode {self.__episode_number} started!")
         
         # 7. Make information about the scenario available
         info = {
@@ -196,7 +196,9 @@ class CarlaEnv(gym.Env):
             print("Episode interrupted!")
             exit(0)
         if self.__truncated or terminated:
+            print(f"Episode ended with reward {self.__reward_func.get_total_ep_reward()}.")
             self.clean_scenario()
+            print("------------------------------------------------------")
         
         # 6. Make information about the scenario available
         info = {

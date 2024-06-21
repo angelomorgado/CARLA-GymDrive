@@ -24,5 +24,5 @@ SIM_FPS                 = 30
 
 # Environment attributes
 ENV_SCENARIOS_FILE      = 'env/simple_scenarios.json'
-ENV_MAX_STEPS           = 3500 # Used to limit the number of steps in the environment and to calculate the reward for finishing an episode successfully
+ENV_MAX_STEPS           = 430 # Max number of steps per episode. I suggest running the helpfull-scipts/check_max_num_steps.py script to get your number
 ENV_WAYPOINT_SPACING    = 7.0

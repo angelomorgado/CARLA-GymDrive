@@ -23,7 +23,8 @@ class Reward:
         self.has_stopped      = False
         self.current_steering = 0.0
         self.current_throttle = 0.0
-        self.waypoints        = []        
+        self.waypoints        = []      
+        self.total_ep_reward  = 0  
         
         self.countint = 0
 
@@ -35,13 +36,17 @@ class Reward:
         if self.terminated:
             self.countint += 1
             print("The episode already ended!!!, count: ", self.countint)
-        
-        return self.__collision_reward(vehicle) + \
+            
+        reward = self.__collision_reward(vehicle) + \
             self.__steering_jerk(vehicle) + \
             self.__throttle_brake_jerk(vehicle) + \
             self.__speed_reward(speed) + \
             self.__target_destination(target_distance) + \
             self.__waypoint_reached(next_waypoint_distance)
+        
+        self.total_ep_reward += reward
+        
+        return reward
         
     # ============================================= Reward Functions ==========================================================
     def __collision_reward(self, vehicle):
@@ -73,7 +78,7 @@ class Reward:
         Based on the calculations, the max reward for this function is 0 and the min reward is -10;
         lambda = 1/300
         '''
-        lbd = 1/300
+        lbd = 10/config.ENV_MAX_STEPS
         steering_diff = abs(vehicle.get_steering() - self.current_steering)
         self.current_steering = vehicle.get_steering()
         return -lbd if steering_diff > threshold else 0.0
@@ -89,7 +94,7 @@ class Reward:
         Based on the calculations, the max reward for this function is 0 and the min reward is -10;
         lambda = 1/300
         '''
-        lbd = 1/300
+        lbd = 10/config.ENV_MAX_STEPS
         throttle_diff = abs(vehicle.get_throttle_brake() - self.current_throttle)
         self.current_throttle = vehicle.get_throttle_brake()
         return -lbd if throttle_diff > threshold else 0.0
@@ -104,9 +109,9 @@ class Reward:
         }
         
         Based on precise calculations the max reward for this function is 15 and the min reward is -15.
-        lambda = 1/200
+        lambda = 15/config.ENV_MAX_STEPS
         '''
-        lbd = 1/200
+        lbd = 15/config.ENV_MAX_STEPS
         
         if speed < 2:
             return 0.0
@@ -119,10 +124,10 @@ class Reward:
         '''
         This function rewards the vehicle more generously the closer it gets to the target, and, if it reaches the target, it gives an incredibly high reward, as to tell him that it arrived. The reward is calculated as follows:
         {
-            100                                : if distance <= threshold,
-            (-7 * distance + 395) / (9 * 3000) : if 5 < distance <= 50,   # More accentuated reward for being closer to the target
-            (100 - distance) / (10 * 3000)     : if 50 < distance <= 100, # Less accentuated reward for being further from the target
-            0                                  : if distance > 100
+            100                                                : if distance <= threshold,
+            (-7 * distance + 395) / (9 * config.ENV_MAX_STEPS) : if 5 < distance <= 50,   # More accentuated reward for being closer to the target
+            (100 - distance) / (10 * config.ENV_MAX_STEPS)     : if 50 < distance <= 100, # Less accentuated reward for being further from the target
+            0                                                  : if distance > 100
         }
         
         Based on precise calculations the max reward for this function is 100 and the min reward is 0.
@@ -131,9 +136,9 @@ class Reward:
             self.terminated = True
             return 100.0
         elif target_distance > threshold and target_distance <= 50.0:
-            return (-7.0*target_distance + 395.0) / (9.0 * 3000.0)
+            return (-7.0*target_distance + 395.0) / (9.0 * config.ENV_MAX_STEPS)
         elif target_distance > 50.0 and target_distance <= 100.0:
-            return (100.0 - target_distance) / (10.0 * 3000.0)
+            return (100.0 - target_distance) / (10.0 * config.ENV_MAX_STEPS)
         else:
             return 0.0
         
@@ -242,12 +247,16 @@ class Reward:
         return self.waypoints
     
     def reset(self, waypoints):
-        self.terminated = False
+        self.terminated       = False
         self.inside_stop_area = False
-        self.has_stopped = False
+        self.has_stopped      = False
         self.current_steering = 0.0
         self.current_throttle = 0.0
-        self.waypoints = waypoints
+        self.waypoints        = waypoints
+        self.total_ep_reward  = 0
     
     def get_terminated(self):
         return self.terminated
+    
+    def get_total_ep_reward(self):
+        return self.total_ep_reward

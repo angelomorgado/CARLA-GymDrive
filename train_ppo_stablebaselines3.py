@@ -5,11 +5,14 @@ import gymnasium as gym
 from agent.stablebaselines3_architectures import CustomExtractor_PPO_End2end, CustomExtractor_PPO_Modular
 
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, CallbackList, StopTrainingOnMaxEpisodes
+from stable_baselines3.common.vec_env import DummyVecEnv, VecTransposeImage
 import numpy as np
 import wandb
 
 LOG_IN_WANDB = False
 END2END = True
+NUM_EPISODES = 15000
+EVALUATE_EVERY = 1000
 
 # Set up wandb
 if LOG_IN_WANDB:
@@ -36,8 +39,14 @@ class CustomEvalCallback(EvalCallback):
     def get_results(self):
         return (self.eval_results, self.episode_numbers)
 
+def make_env():
+    env = gym.make('carla-rl-gym-v0', time_limit=30, initialize_server=True, random_weather=False, synchronous_mode=True, continuous=True, show_sensor_data=False, has_traffic=False, verbose=False)
+    env = DummyVecEnv([lambda: env])
+    env = VecTransposeImage(env)
+    return env
+
 def main():
-    env = gym.make('carla-rl-gym-v0', time_limit=55, initialize_server=True, random_weather=False, synchronous_mode=True, continuous=True, show_sensor_data=False, has_traffic=False, verbose=False)
+    env = make_env()
     
     checkpoint_callback = CheckpointCallback(
         save_freq=10000,
@@ -47,10 +56,10 @@ def main():
         save_vecnormalize=True,
     )
     
-    # Adjust eval_freq to be appropriate for every 100 episodes
-    eval_callback = CustomEvalCallback(env, eval_freq=env.spec.max_episode_steps * 100, log_path="./logs/")
+    # Adjust eval_freq to be appropriate for every 1000 episodes
+    eval_callback = CustomEvalCallback(env, eval_freq=env.envs[0].spec.max_episode_steps * EVALUATE_EVERY, log_path="./logs/")
     
-    callback_max_episodes = StopTrainingOnMaxEpisodes(max_episodes=5000, verbose=1)
+    callback_max_episodes = StopTrainingOnMaxEpisodes(max_episodes=NUM_EPISODES, verbose=1)
     
     callback = CallbackList([checkpoint_callback, eval_callback, callback_max_episodes])
     
@@ -73,25 +82,22 @@ def main():
         batch_size=64,
         n_epochs=4,
         gamma=0.999,
-        tensorboard_log="./ppo_av_tensorboard/",
+        tensorboard_log="./tensorboard/",
         gae_lambda=0.98,
         ent_coef=0.01,
         verbose=1,
     )
     
-    # Calculate total_timesteps based on 5000 episodes
-    total_timesteps = 5000 * env.spec.max_episode_steps
+    # Calculate total_timesteps based on NUM_EPISODES episodes
+    total_timesteps = NUM_EPISODES * (env.envs[0].spec.max_episode_steps + 100) # The +100 is to ensure that the last episode is completed even if the number of steps is reached
     model.learn(total_timesteps=total_timesteps, callback=callback)
     
-    model.save("checkpoints/ppo/ppo_sb3_modular_5000_final")
-    env.close()
+    n = "modular" if not END2END else "end2end"
+    model.save(f"checkpoints/ppo/ppo_sb3_{n}_{NUM_EPISODES}_final")
 
-    if LOG_IN_WANDB:
-        wandb.finish()
-    
     eval_list, episodes_list = eval_callback.get_results()
 
-    with open("ppo_modular_5000_last_execution_modular.txt", "w") as f:
+    with open(f"ppo_{n}_{NUM_EPISODES}_last_execution.txt", "w") as f:
             f.write(f"reward_means: {eval_list}\n")
             f.write(f"episodes: {episodes_list}\n")
             f.write(f"n_steps: {model.num_timesteps}\n")
@@ -100,6 +106,11 @@ def main():
             f.write(f"gamma: {model.gamma}\n")
             f.write(f"gae_lambda: {model.gae_lambda}\n")
             f.write(f"ent_coef: {model.ent_coef}\n")
+    
+    if LOG_IN_WANDB:
+        wandb.finish()
+        
+    env.close()
 
 if __name__ == '__main__':
     main()
