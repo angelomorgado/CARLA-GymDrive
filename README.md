@@ -93,6 +93,19 @@ This template's modules are located and documented in the `src` directory. Their
 
 ---
 
+## Custom Agent Implementation
+
+In the `agent_example` branch, there is a custom implementation of more complex agents. These agents are:
+
+- PPO End-to-end
+- PPO Modular
+- DQN End-to-end
+- DQN Modular
+
+This implementation is based on my master's degree thesis, if you wish to use it or this template for academic purposes, please use the above citation. It features a different observation space as well as a custom feature extractor for the agents.
+
+---
+
 ## License
 
 Carla GymDrive is licensed under the MIT License. See the [LICENSE](/LICENSE) file for details.
