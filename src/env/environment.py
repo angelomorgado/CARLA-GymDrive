@@ -40,7 +40,7 @@ import configuration as config
 
 register(
     id="carla-rl-gym-v0", # name-version
-    entry_point="env.environment:CarlaEnv",
+    entry_point="src.env.environment:CarlaEnv",
     max_episode_steps=config.ENV_MAX_STEPS,
 )
 
@@ -48,9 +48,9 @@ from src.world import World
 from src.server import CarlaServer
 from src.vehicle import Vehicle
 from src.display import Display
-from env.reward import Reward
-import env.observation_action_space
-from env.pre_processing import PreProcessing
+from src.env.reward import Reward
+import src.env.observation_action_space
+from src.env.pre_processing import PreProcessing
 
 # Name: 'carla-rl-gym-v0'
 class CarlaEnv(gym.Env):
@@ -80,17 +80,17 @@ class CarlaEnv(gym.Env):
         self.__vehicle = Vehicle(self.__world.get_world())
 
         # 5. Observation space:
-        self.observation_space = env.observation_action_space.observation_space
+        self.observation_space = src.env.observation_action_space.observation_space
         self.__observation = None
         self.pre_processing = PreProcessing()
 
         # 6: Action space
         if self.__is_continuous:
             # For continuous actions
-            self.action_space = env.observation_action_space.continuous_action_space
+            self.action_space = src.env.observation_action_space.continuous_action_space
         else:
             # For discrete actions
-            self.action_space = env.observation_action_space.discrete_action_space
+            self.action_space = src.env.observation_action_space.discrete_action_space
         
         # Truncated flag
         self.__time_limit = time_limit
@@ -101,7 +101,7 @@ class CarlaEnv(gym.Env):
         self.__active_scenario_name = None
         self.__active_scenario_dict = None
         self.__waypoints = None # List of waypoints to the target
-        self.__situations_map = env.observation_action_space.situations_map
+        self.__situations_map = src.env.observation_action_space.situations_map
         self.__reward_func = Reward()
 
         # Auxiliar variables

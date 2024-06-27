@@ -5,7 +5,7 @@ This script checks if the environment is compatible with the OpenAI Gym API.
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from env.environment import CarlaEnv
+from src.envenvironment import CarlaEnv
 from stable_baselines3.common.env_checker import check_env
 
 def main():

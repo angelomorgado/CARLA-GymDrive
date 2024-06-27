@@ -4,7 +4,7 @@ This script allows you to test all the chosen scenarios, and it also outputs the
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from env.environment import CarlaEnv
+from src.envenvironment import CarlaEnv
 
 # Used to checkout all the scenarios
 def env_test():

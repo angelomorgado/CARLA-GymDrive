@@ -17,7 +17,7 @@ There are two ways of using the environment:
 
     ```python
     import gymnasium as gym
-    import env.environment
+    import src.env.environment
 
     def steps_main():
         env = gym.make('carla-rl-gym-v0')
@@ -36,7 +36,7 @@ There are two ways of using the environment:
 2. The second, is through the CarlaEnv class:
 
     ```python
-    from env.environment import CarlaEnv
+    from src.envenvironment import CarlaEnv
 
     def steps_main():
         env = CarlaEnv()

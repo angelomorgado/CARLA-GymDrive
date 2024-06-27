@@ -3,8 +3,8 @@ Pre-processing Module:
     - This module is used to preprocess the observation data before feeding it to the policy network
 '''
 import numpy as np
-from env.env_aux.farthest_sampler import FarthestSampler
-from env.env_aux.point_net import PointNetfeat
+from src.env.env_aux.farthest_sampler import FarthestSampler
+from src.env.env_aux.point_net import PointNetfeat
 import cv2
 import torch
 

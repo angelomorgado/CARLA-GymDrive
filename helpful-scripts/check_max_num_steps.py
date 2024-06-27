@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import gymnasium as gym
 import time
 import numpy as np
-from env.environment import CarlaEnv
+from src.envenvironment import CarlaEnv
 
 
 env = gym.make('carla-rl-gym-v0', time_limit=30, verbose=False, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=True, show_sensor_data=False, has_traffic=False)
