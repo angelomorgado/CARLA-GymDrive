@@ -1,13 +1,6 @@
-# Episode Generation
+# Carla Environment
 
-## Introduction
-
-The Carla Episode Generator is a tool designed to facilitate the creation of diverse training and testing scenarios for Reinforcement Learning (RL) models in the Carla Simulator [src](https://carla.org/). This tool allows the definition of structured scenarios, the control of environmental parameters such as the map, weather conditions, and traffic density.
-
-This tool was designed having Carla 0.9.15 in mind, however it should work with other versions.
-
-The tool is a gym.Env wrap. This means that you can use this environment as a gym environment and it is even compatible with gym-compatible frameworks for training/testing such as stable-baselines3.
-
+This directory contains the code to configure the Carla environment for the Reinforcement Learning tasks.
 
 ## Instructions Manual
 
@@ -19,37 +12,27 @@ There are two ways of using the environment:
     import gymnasium as gym
     import src.env.environment
 
-    def steps_main():
-        env = gym.make('carla-rl-gym-v0')
-        obs, info = env.reset()
+    env = gym.make('carla-rl-gym-v0')
+    obs, info = env.reset()
 
-        for i in range(300):
-            action = env.action_space.sample()
-            obs, reward, terminated, truncated, info = env.step(action)
+    for i in range(300):
+        action = env.action_space.sample()
+        obs, reward, terminated, truncated, info = env.step(action)
 
-            if terminated or truncated:
-                observation, info = env.reset()
+        if terminated or truncated:
+            observation, info = env.reset()
 
-        env.close()
+    env.close()
     ```
 
 2. The second, is through the CarlaEnv class:
 
     ```python
-    from src.envenvironment import CarlaEnv
+    import gymnasium as gym
+    from src.env.environment import CarlaEnv
 
-    def steps_main():
-        env = CarlaEnv()
-        obs, info = env.reset()
-
-        for i in range(300):
-            action = env.action_space.sample()
-            obs, reward, terminated, truncated, info = env.step(action)
-
-            if terminated or truncated:
-                observation, info = env.reset()
-
-        env.close()
+    env = CarlaEnv()
+    # ...
     ```
 
 The environment's constructor has multiple arguments for the customization of the environment, these are:
@@ -65,114 +48,11 @@ The environment's constructor has multiple arguments for the customization of th
 - `has_traffic` (bool): If False, it loads the episodes without any traffic at all.
 - `verbose` (bool): If True, it displays more detailed outputs about the episodes.
 
-## Simulation configuration
+### Scenario customization
 
-### Configuration
+One of the main advantages of this framework is the ability to easily customize the training/testing scenarios. More information about scenario suite customization can be found in the [configuration documentation](../config/README.md). 
 
-In the file [configuration.py](../configuration.py) there are multiple different configuration options, regarding basically everything about the program. Note that there is a Verbose option there, however it is different from the verbose argument of the constructor, as it prints almost everything that the program does, so it's more powerful.
-
-### Ego Vehicle's Sensors Configuration
-
-To change the ego vehicle's sensors and even their paramenters there's an easy way to do so, simply create a JSON file and make something along the lines of:
-
-```python
-{
-    "rgb_camera":{
-        "image_size_x": 640,
-        "image_size_y": 360,
-        "fov": 110,
-        "sensor_tick": 0.0,
-        "location_x": 0.8,
-        "location_y": 0.0,
-        "location_z": 1.7
-    },
-    "lidar":{
-        "channels": 64,
-        "range": 100.0,
-        "points_per_second": 1000000,
-        "rotation_frequency": 50.0,
-        "upper_fov": 20.0,
-        "lower_fov": -30.0,
-        "sensor_tick": 0.0,
-        "location_x": 0.8,
-        "location_y": 0.0,
-        "location_z": 1.7
-    },
-    "collision":{
-        "location_x": 0.0,
-        "location_y": 0.0,
-        "location_z": 0.0
-    },
-    "lane_invasion":{
-        "location_x": 0.0,
-        "location_y": 0.0,
-        "location_z": 0.0
-    }
-}
-```
-
-Note that it is important to follow the naming standard or else the program might not work as it is expecting certain names and they do not exist.
-
-A list of available sensors can be found [here](../README.md).
-
-### Scenario Customization
-
-Making new scenarios or changing the existing ones is super intuitive. Basically you only have to create a JSON file to manage the scenarios. Then you have to specify the path to the json in the configuration.py file.
-
-It must specify the following parameters:
-
-- `map_name`: The name of the CARLA map. Don't specify the path, simply the name of the map
-- `weather_condition`: The weather conditions (e.g., "ClearNoon").
-- `initial_position`: Initial position of the ego vehicle (x, y, z coordinates).
-- `initial_rotation`: Initial rotation of the ego vehicle (pitch, yaw, roll)
-- `situation`: Type of scenario or situation (e.g., "Road", "Roundabout," "Junction" and "Tunnel")
-- `target_position`: Target position for the ego vehicle
-
-An example of a JSON file is below:
-
-```json
-{
-  "Town01-ClearNoon-Road-0": {
-    "map_name": "Town01",
-    "weather_condition": "Clear Noon",
-    "initial_position": {"x": 312.3, "y": 195.3, "z": 0.3},
-    "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
-    "target_position": {"x": 128.2, "y": 195.3, "z": 0.3},
-    "target_gnss": {"lat": -0.001754, "lon": 0.001143, "alt": 0},
-    "situation": "Road"
-  },
-  "Town01-ClearNoon-Junction-0": {
-    "map_name": "Town01",
-    "weather_condition": "Clear Noon",
-    "initial_position": {"x": 51.4, "y": 330.8, "z": 0.3},
-    "initial_rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
-    "target_position": {"x": 128.1, "y": 330.8, "z": 0.3},
-    "target_gnss": {"lat": -0.002972, "lon": 0.001160, "alt": 0},
-    "situation": "Junction"
-  },
-  "Town01-ClearNoon-Junction-1": {
-    "map_name": "Town01",
-    "weather_condition": "Clear Noon",
-    "initial_position": {"x": 51.4, "y": 330.8, "z": 0.3},
-    "initial_rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
-    "target_position": {"x": 92.6, "y": 302.1, "z": 0.3},
-    "target_gnss": {"lat": -0.002705, "lon": 0.000832, "alt": 0},
-    "situation": "Junction"
-  },
-  "Town10HD-ClearNoon-Road-0": {
-    "map_name": "Town10HD",
-    "weather_condition": "Clear Noon",
-    "initial_position": {"x": 59.5, "y": 130.5, "z": 0.3},
-    "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
-    "target_position": {"x": -15.3, "y": 129.9, "z": 0.3},
-    "target_gnss": {"lat": -0.001167, "lon": -0.000146, "alt": 0},
-    "situation": "Junction"
-  },
-....
-}
-```
-
-### Observation Space
+### Observation Space Customization
 
 Observation space is totally customizable, and it follows the gymnasium.Spaces standard, however, if you wish to use the default ones, the observation space is:
 
@@ -197,7 +77,7 @@ However you can customize this by changing the dictionary and the number of situ
 
 To  change the observation space you need to change the file [observation_action_space.py](../env/observation_action_space.py); and then go to the [CarlaEnv](../env/environment.py) class and change the `__update_observation` method.
 
-### Action Space
+### Action Space Customization
 
 Observation space is totally customizable, and it follows the gymnasium.Spaces standard, however, if you wish to use the default ones, the observation space is:
 
@@ -212,17 +92,11 @@ self.action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1
 self.action_space = spaces.Discrete(4)
 ```
 
-### Reward Function
+To  change the action space you need to change the file [observation_action_space.py](../env/observation_action_space.py).
 
-To customize the reward function you can simply change the function `calculate_reward` in the file [reward.py](../env/reward.py). If you want to change the signature of the function, don't forget to also change it in the [CarlaEnv](../env/environment.py) class!
+### Reward Function Customization
 
-The default reward function takes into account these factors:
-- The orientation of the ego vehicle. To do this it uses the cousine of the angle between the ego vehicle's forward vector and the road's forward vector. The closer to 1, the better.
-- The distance between the ego vehicle and the waypoint location. The closer, the better. (I'm thinking in removing this one)
-- The speed of the ego vehicle. It it passes the limit speed, it gets a penalty.
-- It penalizes the car if it's stopped.
-- It ends the simulation and penalizes severely the ego vehicle if it has a collision, trespasses a lane, or goes off-road.
-- It ends the simulation and penalizes severely the ego vehicle if it doesn't stop at a red light or at a stop sign.
+The reward function is fully customizable. To finetune it you can simply change the function `calculate_reward` in the file [reward.py](../env/reward.py). If you want to change the signature of the function, in case you need additional data to calculate the reward, don't forget to also change it in the [CarlaEnv](../env/environment.py) class!
 
 ### Methods
 
@@ -232,7 +106,7 @@ The public methods accessible through the CarlaEnv class are:
 
 - `env.reset()`: Starts a new episode in a random scenario.
   - seed: Seed to make the episode deterministic
-  - options: extra options. There are none at the moment
+  - options: Dictionary with the key `scenario_name` to specify the specific scenario to load in case the problem requires it.
 - `env.step(action)`: Takes a step in the environment. The action must be according the action space.
 - `env.render()`: Ticks the simulation
 - `env.close()`: Closes the simulation
@@ -247,8 +121,9 @@ The public methods accessible through the CarlaEnv class are:
 #### Debug methods
 
 - `env.place_spectator_above_vehicle()`: It places the server screen on top of the ego vehicle.
-- `env.output_all_waypoints(spacing)`: Outputs on the server screen all waypoints separated by a determined spacing.
-- `env.output_waypoints_to_target(spacing)`: Outputs on the server screen the waypoints from the starting point of the scenario to the target point, separated by a certain spacing.
+- `env.output_all_waypoints(spacing)`: Outputs on the server screen all waypoints of the map separated by a determined spacing.
+- `env.draw_waypoints(waypoint_list, life_time)`: Outputs on the server screen the waypoints present in the provided list.
+- `env.get_path_waypoints(spacing)`: Returns a list of waypoints of the scenario path separated by a determined spacing.
 
 ## Attributes
 

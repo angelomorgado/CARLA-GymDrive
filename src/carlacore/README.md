@@ -1,4 +1,6 @@
-# Carla Ultimate Template Modules
+# Carla Core Modules
+
+This directory contains the all the backend code that acts as an interface between the Carla simulator and the environment. The core modules provide functionalities for managing vehicles, sensors, traffic, weather, map, and more in the Carla simulation environment. These modules are designed to be modular and extensible, allowing users to interact with the simulation environment in a flexible and customizable manner.
 
 ## Index
 

@@ -22,7 +22,18 @@ If you use Carla GymDrive in your research, please cite using the following cita
 Morgado, Â., \& Pombo, N. (2024). CARLA-GymDrive: Autonomous driving episode generation for the Carla simulator in a gym environment. email: angelo.morgado@ubi.pt. [Online]. Available: \url{https://github.com/angelomorgado/CARLA-GymDrive}.
 ```
 
-## Features
+---
+
+## Project Structure
+
+The project is structured as follows:
+
+- `src`: Contains the source code for the Carla GymDrive framework.
+- [`src/env`](src/env/README.md): Contains the environment code for the Carla GymDrive framework, as well as the files for observation/action space and reward function customization.
+- [`src/config`](src/config/README.md): Contains the configuration files for the Carla GymDrive framework, such as sensor configurations, scenario configurations, and vehicle physics configurations.
+- [`src/carlacore`](src/carlacore/README.md): Contains the back-end code that acts as an interface between the Carla simulator and the environment.	
+
+## Main Features
 
 ### Seamless Integration and Easy Customization
 
@@ -38,7 +49,7 @@ The framework is built with a modular design approach, enabling easy customizati
 
 ### Custom Vehicular Sensory
 
-By leveraging json files, it is possible to create various builds of vehicles with different sensors and configurations. This allows for the creation of custom vehicles with different sensor configurations. Such example of a build can be found in the [./env/train_sensors.json](./env/train_sensors.json) file.
+By leveraging json files, it is possible to create various builds of vehicles with different sensors and configurations. This allows for the creation of custom vehicles with different sensor configurations.
 
 ### Sensor Visualization
 
@@ -46,7 +57,7 @@ Through Pygame, it is possible to visualize the sensor data in real-time. This i
 
 ### Vehicle Physics Customization
 
-Vehicles have their physics changed according to the weather. This template allows for the customization of a vehicle's physics based on the weather conditions. This is useful for simulating the effects of weather on a vehicle's performance. This can be achieved through JSON files. One such example can be found in the [./env/default_vehicle_physics.json](./env/default_vehicle_physics.json) file.
+Vehicles have their physics changed according to the weather. This template allows for the customization of a vehicle's physics based on the weather conditions. This is useful for simulating the effects of weather on a vehicle's performance. This can be achieved through JSON files.
 
 ### Complete Simulation Control and Management Using Minimal Code
 
@@ -58,51 +69,42 @@ The template allows for the complete control and management of the Carla simulat
 
 1. It is recommended to use a virtual environment with python 3.8.
 
- - If you wish to use the same virtual environment as me which used Carla 0.9.15, install conda and run `conda env create -f environment.yml`
- - If you wish to use a different version of Carla, you can create a new environment with `conda create -n carla python=3.8` and then install the requirements with `pip install -r requirements.txt`
+- If you wish to use the same virtual environment as me which used Carla 0.9.15, install conda and run `conda env create -f environment.yml`
+- If you wish to use a different version of Carla, you can create a new environment with `conda create -n carla python=3.8` and then install the requirements with `pip install -r requirements.txt`
 
-3. Setup the environment variable `CARLA_SERVER` to the path of the Carla server directory.
+2. Setup the environment variable `CARLA_SERVER` to the path of the Carla server directory.
 
-4. Run the Carla server:
+3. Run the Carla server:
 
- - If the script automatically starts the server, you can skip this step. Make sure to set the environment variable `CARLA_SERVER` to the path of the Carla server directory.
- - If the script does not automatically start the server, you need to start the server manually.
+- If the script automatically starts the server, you can skip this step. Make sure to set the environment variable `CARLA_SERVER` to the path of the Carla server directory.
+- If the script does not automatically start the server, you need to start the server manually.
 
-5. Run training/testing scripts
-
----
-
-## Episode Generation
-
-For a more extensive documentation on how to generate episodes, please refer to the [Environment](env/README.md) documentation.
+4. Run training/testing scripts.
 
 ---
 
-## Modules
+## Environment Configuration
 
-This template's modules are located and documented in the `src` directory. Their documentation can be found [here](src/README.md)
+There are countless options for configuring the simulation and the gym environment. In order to fine-tune the environment to your needs, you can change the following parameters in the [`src/config/configuration.py`](`src/config/configuration.py`) file.
 
 ---
 
 ## Known Issues
 
-- The simulator may crash when changing maps to many times. This is a known issue with Carla and is not a problem with the template. The problem is random, so if it happens, it is recommended to save checkpoints and then restart the training in the latest checkpoint.
-- If the simulator is ran in low quality mode, it crashes the program, this is a problem in Carla's side and it's known by the community;
-- Moving the walkers causes segmentation fault. This is a known problem between the community.
-- Simply spawning the walkers might cause the program to crash. This is maybe due to my personal computer's performance. I haven't tested it in a more powerfull pc. I don't think it is a coding problem, but i might be wrong.
+- The simulator may crash when changing maps to many times. This is a known issue with Carla and is not a problem with the template. The problem is random, so if it happens, it is recommended to save checkpoints and then restart the training in the latest checkpoint. Example of the issue being reported [here](https://github.com/carla-simulator/carla/issues/4711);
+- If the simulator is ran in low quality mode, it crashes the program, this is a problem in Carla's side and it's known by the community. Issue reported [here](https://github.com/carla-simulator/carla/issues/6399);
+- Moving the walkers causes segmentation fault. This is a known problem between the community[here](https://github.com/carla-simulator/carla/issues/4155);
 
 ---
+## Helpful Scripts
 
-## Custom Agent Implementation
+The directory `helpful-scripts` contains some useful scripts for using the this environment not only for a development purpose but also for a research purpose.
 
-In the `agent_example` branch, there is a custom implementation of more complex agents. These agents are:
+## Agent Training
 
-- PPO End-to-end
-- PPO Modular
-- DQN End-to-end
-- DQN Modular
+This repository doesn't contain any agent custom policies, however it provides an example training script for the DQN algorithm using the stable-baselines3 library. The script name is `example_sb3_dqn_training.py`.
 
-This implementation is based on my master's degree thesis, if you wish to use it or this template for academic purposes, please use the above citation. It features a different observation space as well as a custom feature extractor for the agents.
+If you want to see the agents I used in my thesis research, you can check the [CARLA-RL-Agents repository](https://github.com/angelomorgado/CARLA-RL-Agents).
 
 ---
 
