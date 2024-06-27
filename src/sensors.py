@@ -24,7 +24,7 @@ import carla
 import numpy as np
 from PIL import Image
 import cv2
-import config.configuration as configuration
+import src.config.configuration as configuration
 
 # ====================================== RGB Camera ======================================
 class RGB_Camera:

@@ -36,7 +36,7 @@ import carla
 
 import gymnasium as gym
 from gymnasium.envs.registration import register
-import config.configuration as config
+import src.config.configuration as config
 
 register(
     id="carla-rl-gym-v0", # name-version

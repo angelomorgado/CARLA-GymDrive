@@ -8,7 +8,7 @@ import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from src.vehicle import Vehicle
-import config.configuration as configuration
+import src.config.configuration as configuration
 from src.display import Display
 from src.world import World
 from src.server import CarlaServer

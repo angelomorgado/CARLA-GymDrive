@@ -5,7 +5,7 @@ This is just a simple example to show that it is possible to train an agent usin
 
 If you want to train an agent for a more real-life problem, you should consider using more complex models and hyperparameters; or even using other RL libraries compatible with the gym interface.
 '''
-from src.envenvironment import CarlaEnv # It is mandatory to import the environment even if it is not used in this script
+from src.env.environment import CarlaEnv # It is mandatory to import the environment even if it is not used in this script
 from stable_baselines3 import DQN
 import gymnasium as gym
 from stable_baselines3.common.vec_env import DummyVecEnv, VecTransposeImage
