@@ -1,9 +1,5 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 src/__pycache__/
-env/__pycache__/
-agent/__pycache__/
+src/env/__pycache__/
 *.py[cod]
-logs/
-ppo_av_tensorboard/
-test_agent.py

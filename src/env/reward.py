@@ -11,7 +11,7 @@ I made the reward function based on this data:
 '''
 from src.vehicle import Vehicle
 from src.world import World
-import configuration as config
+import config.configuration as config
 import carla
 import numpy as np
 

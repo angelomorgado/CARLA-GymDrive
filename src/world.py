@@ -14,7 +14,7 @@ from src.weather_control import WeatherControl
 from src.traffic_control import TrafficControl
 from src.weather_control import WeatherControl
 from src.map_control     import MapControl
-import configuration as config
+import config.configuration as config
 import time
 
 class World:

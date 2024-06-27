@@ -10,7 +10,7 @@ import random
 import json
 import os
 
-import configuration
+import config.configuration as configuration
 import src.sensors as sensors
 
 class Vehicle:

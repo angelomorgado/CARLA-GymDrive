@@ -5,7 +5,7 @@ import time
 import numpy as np
 import math
 
-import configuration as config
+import config.configuration as config
 
 '''
 Traffic Controller module:
