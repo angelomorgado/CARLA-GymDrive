@@ -69,7 +69,7 @@ The template allows for the complete control and management of the Carla simulat
 
 1. It is recommended to use a virtual environment with python 3.8.
 
-- If you wish to use the same virtual environment as me which used Carla 0.9.15, install conda and run `conda env create -f environment.yml`
+- If you wish to use the same virtual environment as me which used Carla 0.9.15, install conda and run `conda env create -f carla_0.9.15_virtual_env.yml`
 - If you wish to use a different version of Carla, you can create a new environment with `conda create -n carla python=3.8` and then install the requirements with `pip install -r requirements.txt`
 
 2. Setup the environment variable `CARLA_SERVER` to the path of the Carla server directory.
