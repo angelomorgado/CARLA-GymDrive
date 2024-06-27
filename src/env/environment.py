@@ -44,10 +44,10 @@ register(
     max_episode_steps=config.ENV_MAX_STEPS,
 )
 
-from src.world import World
-from src.server import CarlaServer
-from src.vehicle import Vehicle
-from src.display import Display
+from src.carlacore.world import World
+from src.carlacore.server import CarlaServer
+from src.carlacore.vehicle import Vehicle
+from src.carlacore.display import Display
 from src.env.reward import Reward
 import src.env.observation_action_space
 from src.env.pre_processing import PreProcessing

@@ -11,7 +11,7 @@ import json
 import os
 
 import src.config.configuration as configuration
-import src.sensors as sensors
+import src.carlacore.sensors as sensors
 
 class Vehicle:
     def __init__(self, world):

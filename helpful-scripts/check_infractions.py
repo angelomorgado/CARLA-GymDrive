@@ -7,12 +7,12 @@ check_infractions.py
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from src.vehicle import Vehicle
+from src.carlacore.vehicle import Vehicle
 import src.config.configuration as configuration
-from src.display import Display
-from src.world import World
-from src.server import CarlaServer
-from src.keyboard_control import KeyboardControl
+from src.carlacore.display import Display
+from src.carlacore.world import World
+from src.carlacore.server import CarlaServer
+from src.carlacore.keyboard_control import KeyboardControl
 import carla
 import random
 

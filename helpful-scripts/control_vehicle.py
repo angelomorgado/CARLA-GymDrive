@@ -12,11 +12,11 @@ Control the vehicle using the keyboard:
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from src.vehicle import Vehicle
-from src.display import Display
-from src.world import World
-from src.server import CarlaServer
-from src.keyboard_control import KeyboardControl
+from src.carlacore.vehicle import Vehicle
+from src.carlacore.display import Display
+from src.carlacore.world import World
+from src.carlacore.server import CarlaServer
+from src.carlacore.keyboard_control import KeyboardControl
 
 def main():
     process = CarlaServer.initialize_server()

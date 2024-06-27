@@ -10,10 +10,10 @@ World:
 
 import carla
 
-from src.weather_control import WeatherControl
-from src.traffic_control import TrafficControl
-from src.weather_control import WeatherControl
-from src.map_control     import MapControl
+from src.carlacore.weather_control import WeatherControl
+from src.carlacore.traffic_control import TrafficControl
+from src.carlacore.weather_control import WeatherControl
+from src.carlacore.map_control     import MapControl
 import src.config.configuration as config
 import time
 

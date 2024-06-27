@@ -9,8 +9,8 @@ I made the reward function based on this data:
 - Episode time: 30 seconds
 - Maximum number of ticks/steps: 3000
 '''
-from src.vehicle import Vehicle
-from src.world import World
+from src.carlacore.vehicle import Vehicle
+from src.carlacore.world import World
 import src.config.configuration as config
 import carla
 import numpy as np
