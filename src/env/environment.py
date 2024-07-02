@@ -55,17 +55,18 @@ from src.env.pre_processing import PreProcessing
 # Name: 'carla-rl-gym-v0'
 class CarlaEnv(gym.Env):
     metadata = {"render_modes": ["human"], "render_fps": config.SIM_FPS}
-    def __init__(self, continuous=True, scenarios=[], time_limit=60, initialize_server=True, random_weather=False, random_traffic=False, synchronous_mode=True, show_sensor_data=False, has_traffic=True, verbose=True):
+    def __init__(self, continuous=True, scenarios=[], time_limit=60, initialize_server=True, random_weather=False, random_traffic=False, synchronous_mode=True, show_sensor_data=False, has_traffic=True, apply_physics=True, verbose=True):
         super().__init__()
         # Read the environment settings
         self.__is_continuous = continuous
+        self.__automatic_server_initialization = initialize_server
         self.__random_weather = random_weather
         self.__random_traffic = random_traffic
         self.__synchronous_mode = synchronous_mode
         self.__show_sensor_data = show_sensor_data
         self.__has_traffic = has_traffic
+        self.__apply_physics = apply_physics
         self.__verbose = verbose
-        self.__automatic_server_initialization = initialize_server
 
         # 1. Start the server
         if self.__automatic_server_initialization:
@@ -288,7 +289,13 @@ class CarlaEnv(gym.Env):
             self.display.play_window_tick()
         if self.__verbose:
             print("Vehicle spawned!")
-        
+            
+        # Apply ego vehicle physics
+        if self.__apply_physics:
+            self.__vehicle.adapt_to_weather(scenario_dict['weather_condition'])
+            if self.__verbose:
+                print("Physics applied!")
+            
         # Traffic
         if self.__has_traffic:
             self.__spawn_traffic(seed=seed)
