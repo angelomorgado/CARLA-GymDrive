@@ -135,6 +135,8 @@ class CarlaEnv(gym.Env):
         
         # 4. Get list of waypoints to the target from the starting position
         self.__waypoints = self.get_path_waypoints(spacing=config.ENV_WAYPOINT_SPACING)
+        if self.__verbose:
+            self.draw_waypoints(self.__waypoints)
         # Turn each waypoint into a list of 3 elements
         self.__waypoints = [np.array([w.x, w.y, w.z]) for w in self.__waypoints]
         

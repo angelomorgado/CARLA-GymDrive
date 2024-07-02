@@ -6,7 +6,7 @@ import gymnasium as gym
 
 def steps_main():
     # env = CarlaEnv('carla-rl-gym-v0', time_limit=300, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)  # <-- Alternative way to create the environment
-    env = gym.make('carla-rl-gym-v0', time_limit=15, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
+    env = gym.make('carla-rl-gym-v0', time_limit=15, initialize_server=True, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=False, random_traffic=True)
     obs, info = env.reset()
     
     # Number of steps
@@ -21,7 +21,7 @@ def steps_main():
     env.close()
 
 def episodes_main():
-    env = gym.make('carla-rl-gym-v0', time_limit=15, initialize_server=False, random_weather=True, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=True)
+    env = gym.make('carla-rl-gym-v0', time_limit=15, initialize_server=False, random_weather=False, synchronous_mode=True, continuous=False, show_sensor_data=True, random_traffic=False)
 
     # Number of episodes
     for i in range(5):
