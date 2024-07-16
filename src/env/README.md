@@ -47,6 +47,7 @@ The environment's constructor has multiple arguments for the customization of th
 - `show_sensor_data` (bool): If True, during each episode it opens up a pygame window with the ego vehicle's sensors for easy visualization.
 - `has_traffic` (bool): If False, it loads the episodes without any traffic at all.
 - `apply_physics` (bool): If True, it applies the physics in the physics file to the simulation. If False, the default physics are maintained through all weather conditions.
+- `autopilot` (bool): If True, the ego vehicle is controlled by the autopilot. If False, the ego vehicle is controlled by the agent. It is recommended to give an action that doesn't move the vehicle. Its main usage is for debugging purposes or even demonstration purposes.
 - `verbose` (bool): If True, it displays more detailed outputs about the episodes.
 
 ### Scenario customization
