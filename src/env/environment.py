@@ -237,7 +237,10 @@ class CarlaEnv(gym.Env):
         vehicle_loc = self.__vehicle.get_location()
         current_position = np.array([vehicle_loc.x, vehicle_loc.y, vehicle_loc.z])
         target_position = np.array([self.__active_scenario_dict['target_position']['x'], self.__active_scenario_dict['target_position']['y'], self.__active_scenario_dict['target_position']['z']])
-        next_waypoint_position = np.array([self.__waypoints[0][0], self.__waypoints[0][1], self.__waypoints[0][2]])
+        try:
+            next_waypoint_position = np.array([self.__waypoints[0][0], self.__waypoints[0][1], self.__waypoints[0][2]])
+        except IndexError:
+            next_waypoint_position = np.array([0.0, 0.0, 0.0])
         speed = np.array([self.__vehicle.get_speed()])
         situation = self.__situations_map[self.__active_scenario_dict['situation']]
 
