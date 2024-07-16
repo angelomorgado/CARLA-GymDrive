@@ -2,6 +2,8 @@
 
 Carla GymDrive is a powerful framework designed to facilitate reinforcement learning experiments in autonomous driving using the Carla simulator. By providing a gymnasium-like environment, it offers an intuitive and efficient platform for training driving agents using reinforcement learning techniques.
 
+![CARLA-GymDrive](./gifs/clip.gif)
+
 ## Citation
 
 If you use Carla GymDrive in your research, please cite using the following citation:
