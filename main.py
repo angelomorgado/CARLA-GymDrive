@@ -21,7 +21,7 @@ def steps_main():
     env.close()
 
 def episodes_main():
-    env = gym.make('carla-rl-gym-v0', time_limit=15, initialize_server=False, random_weather=False, synchronous_mode=True, continuous=True, show_sensor_data=True, random_traffic=False, autopilot=True)
+    env = gym.make('carla-rl-gym-v0', time_limit=15, initialize_server=False, random_weather=False, synchronous_mode=True, continuous=True, show_sensor_data=True, random_traffic=False, autopilot=False)
 
     # Number of episodes
     for i in range(5):
