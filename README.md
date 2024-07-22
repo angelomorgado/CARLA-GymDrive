@@ -24,6 +24,8 @@ If you use Carla GymDrive in your research, please cite using the following cita
 Morgado, Â., \& Pombo, N. (2024). CARLA-GymDrive: Autonomous driving episode generation for the Carla simulator in a gym environment. email: angelo.morgado@ubi.pt. [Online]. Available: \url{https://github.com/angelomorgado/CARLA-GymDrive}.
 ```
 
+**WARNING:** In order to use this framework you should first download the CARLA simulator in your machine in the following [link](https://github.com/carla-simulator/carla/releases)
+
 ---
 
 ## Project Structure
