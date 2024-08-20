@@ -4,11 +4,11 @@ This script allows you to test all the chosen scenarios, and it also outputs the
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from src.envenvironment import CarlaEnv
+from src.env.environment import CarlaEnv
 
 # Used to checkout all the scenarios
 def env_test():
-    env = CarlaEnv('carla-rl-gym_cont', initialize_server=True, has_traffic=False, verbose=True, show_sensor_data=False)
+    env = CarlaEnv('carla-rl-gym_cont', initialize_server=False, has_traffic=False, verbose=True, show_sensor_data=False)
     active_s = 0
 
     while True:
@@ -31,7 +31,7 @@ def env_test():
             # env.output_waypoints_to_target()
             waypoints = env.get_path_waypoints(spacing=7.0)
             env.draw_waypoints(waypoints)
-            print(distance(waypoints[0], vehicle_loc))
+            print("Distance to next waypoint: ", distance(waypoints[0], vehicle_loc))
 
         except KeyboardInterrupt:
             env.close()
