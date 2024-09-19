@@ -95,9 +95,9 @@ There are countless options for configuring the simulation and the gym environme
 
 ## Known Issues
 
-- The simulator may crash when changing maps to many times. This is a known issue with Carla and is not a problem with the template. The problem is random, so if it happens, it is recommended to save checkpoints and then restart the training in the latest checkpoint. Example of the issue being reported [here](https://github.com/carla-simulator/carla/issues/4711);
+- The simulator may crash after a certain amount of episodes. This is a known issue with Carla and is not a problem with the template. The problem happens because the CARLA server runs out of memory. This issue is reported [here](https://github.com/carla-simulator/carla/issues/3197);
 - If the simulator is ran in low quality mode, it crashes the program, this is a problem in Carla's side and it's known by the community. Issue reported [here](https://github.com/carla-simulator/carla/issues/6399);
-- Moving the walkers causes segmentation fault. This is a known problem between the community[here](https://github.com/carla-simulator/carla/issues/4155);
+- Moving the walkers causes segmentation fault. This is a known problem with the simulator between the community [here](https://github.com/carla-simulator/carla/issues/4155);
 
 ---
 ## Helpful Scripts
