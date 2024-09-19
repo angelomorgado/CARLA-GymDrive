@@ -47,6 +47,9 @@ class World:
     def destroy_world(self):
         self.destroy_pedestrians()
         self.destroy_vehicles()
+        
+    def set_timeout(self, timeout):
+        self.__client.set_timeout(timeout)
     
     def tick(self):
         self.__world.tick()

@@ -109,7 +109,7 @@ class CarlaEnv(gym.Env):
         # Auxiliar variables
         self.__first_episode = True
         self.__episode_number = 0
-        self.__restart_every = 5000 # Restart the server every n episodes so it doesn't crash
+        self.__restart_every = 1000 # Reload every n episodes so it doesn't crash
         
     # ===================================================== GYM METHODS =====================================================                
     # This reset loads a random scenario and returns the initial state plus information about the scenario
@@ -317,6 +317,11 @@ class CarlaEnv(gym.Env):
         self.__vehicle.destroy_vehicle()
         self.__world.destroy_vehicles()
         self.__world.destroy_pedestrians()
+        
+        if self.__episode_number % self.__restart_every == 0:
+            self.__world.set_timeout(4.0)
+            self.__world.reload_map()
+            
         if self.__verbose:
             print("Scenario cleaned!")
     
