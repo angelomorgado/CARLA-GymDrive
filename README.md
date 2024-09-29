@@ -120,4 +120,4 @@ Carla GymDrive is licensed under the MIT License. See the [LICENSE](/LICENSE) fi
 
 Carla GymDrive is inspired by the open-source community and contributions from researchers and developers around the world. I would like to express our gratitude to the Carla team for providing an excellent simulator for autonomous driving research.
 
-I would like to thank the user [song-hl](https://github.com/song-hl) for helping me debug the PPO custom feature extractor for the stable-baselines3 framework.
+I would like to thank the user [song-hl](https://github.com/song-hl) for helping me debug the PPO custom feature extractor for the stable-baselines3 framework, and the user [the-big-bad-wolf](https://github.com/the-big-bad-wolf) for noting out the no rendering not updating every episode.
