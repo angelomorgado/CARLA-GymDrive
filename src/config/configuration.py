@@ -19,6 +19,7 @@ SIM_PORT                = 2000
 SIM_TIMEOUT             = 100.0
 SIM_LOW_QUALITY         = False
 SIM_OFFSCREEN_RENDERING = False
+SIM_NO_RENDERING        = False
 SIM_DELTA_SECONDS       = 0.05
 SIM_FPS                 = 30
 
