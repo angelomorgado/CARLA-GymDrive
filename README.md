@@ -71,12 +71,24 @@ The template allows for the complete control and management of the Carla simulat
 
 ## Installation and Usage
 
+0. In order to use the software, the user first needs to install the CARLA simulator, which is the [server](https://github.com/carla-simulator/carla/releases/tag/0.9.15). After making sure that the server works, the user can then follow the installation guide in its documentation in order to use the framework. For first time users of the CARLA simulator, its installation can sometimes be tricky due to its engine, sometimes requiring drivers. Therefore, it is important to make sure that the simulator works before using the framework.
+
 1. It is recommended to use a virtual environment with python 3.8.
 
 - If you wish to use the same virtual environment as me which used Carla 0.9.15, install conda and run `conda env create -f carla_0.9.15_virtual_env.yml`
 - If you wish to use a different version of Carla, you can create a new environment with `conda create -n carla python=3.8` and then install the requirements with `pip install -r requirements.txt`
 
-2. Setup the environment variable `CARLA_SERVER` to the path of the Carla server directory.
+2. Set the environment variable `CARLA_SERVER` to the path of the Carla server directory:
+- On Windows:
+Open the Command Prompt or PowerShell and run:
+```setx CARLA_SERVER "C:\path\to\Carla\server"```
+
+If you wish to do it through the control panel follow [this guide](https://superuser.com/questions/949560/how-do-i-set-system-environment-variables-in-windows-10)
+
+- On Linux:
+Open the terminal and add the following line to your .bashrc or .zshrc file:
+export CARLA_SERVER="/path/to/Carla/server"
+Then, run source ~/.bashrc or source ~/.zshrc to apply the changes.
 
 3. Run the Carla server:
 
