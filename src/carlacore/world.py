@@ -30,11 +30,17 @@ class World:
         self.__map = self.__map_control.get_map()
         
         self.__synchronous_mode = synchronous_mode
+        self.__no_rendering_mode = config.SIM_NO_RENDERING
+        self.__fixed_delta_seconds = 0.0
+
         if self.__synchronous_mode:
-            self.__settings = self.__world.get_settings()
-            self.__settings.synchronous_mode = True
-            self.__settings.fixed_delta_seconds = config.SIM_DELTA_SECONDS
-            self.__world.apply_settings(self.__settings)
+            self.__fixed_delta_seconds = config.SIM_DELTA_SECONDS
+
+        self.__settings = self.__world.get_settings()
+        self.__settings.synchronous_mode = self.__synchronous_mode
+        self.__settings.no_rendering_mode = self.__no_rendering_mode
+        self.__settings.fixed_delta_seconds = self.__fixed_delta_seconds
+        self.__world.apply_settings(self.__settings)
         if config.VERBOSE:
             print("World initialized!")
 
