@@ -17,10 +17,10 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecTransposeImage
 def make_env():
     env = gym.make(
         "carla-rl-gym-v0",
-        time_limit=300,
+        time_limit=60000,
         initialize_server=False,
         random_weather=False,
-        synchronous_mode=True,
+        synchronous_mode=False,
         continuous=True,
         show_sensor_data=True,
         has_traffic=True,
