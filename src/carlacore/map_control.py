@@ -33,14 +33,9 @@ class MapControl:
         self.__active_map = self.__map_dict[map_name]
         if map_name in ["Town15", "Town11", "Town12", "Town13"]:
             map_name += f"/{map_name}"
-        self.__client.load_world('/Game/Carla/Maps/' + map_name)
+        self.__client.load_world('/Game/Carla/Maps/' + map_name, reset_settings=False)
         time.sleep(3)
         self.__map = self.__world.get_map()
-        
-        settings = self.__world.get_settings()
-        if config.SIM_NO_RENDERING:
-            settings.no_rendering_mode = True
-            self.__world.apply_settings(settings)
 
     # Serves for debugging purposes
     def change_map(self):
