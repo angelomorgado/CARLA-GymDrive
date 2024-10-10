@@ -71,12 +71,23 @@ The template allows for the complete control and management of the Carla simulat
 
 ## Installation and Usage
 
+0. In order to use the software, the user first needs to install the CARLA simulator, which is the [server](https://github.com/carla-simulator/carla/releases/tag/0.9.15). After making sure that the server works, the user can then follow the installation guide in its documentation in order to use the framework. For first time users of the CARLA simulator, its installation can sometimes be tricky due to its engine, sometimes requiring drivers. Therefore, it is important to make sure that the simulator works before using the framework.
+
 1. It is recommended to use a virtual environment with python 3.8.
 
-- If you wish to use the same virtual environment as me which used Carla 0.9.15, install conda and run `conda env create -f carla_0.9.15_virtual_env.yml`
-- If you wish to use a different version of Carla, you can create a new environment with `conda create -n carla python=3.8` and then install the requirements with `pip install -r requirements.txt`
+- Create a new environment with `conda create -n carla python=3.8`, then open up the environment with `conda activate carla`, and then install the requirements with `pip install -r requirements.txt`
 
-2. Setup the environment variable `CARLA_SERVER` to the path of the Carla server directory.
+2. Set the environment variable `CARLA_SERVER` to the path of the Carla server directory:
+  - On Windows:
+  Open the Command Prompt or PowerShell and run:
+  ```setx CARLA_SERVER "C:\path\to\Carla\server"```
+
+  If you wish to do it through the control panel follow [this guide](https://superuser.com/questions/949560/how-do-i-set-system-environment-variables-in-windows-10)
+
+  - On Linux:
+  Open the terminal and add the following line to your .bashrc or .zshrc file:
+  export CARLA_SERVER="/path/to/Carla/server"
+  Then, run source ~/.bashrc or source ~/.zshrc to apply the changes.
 
 3. Run the Carla server:
 
@@ -84,6 +95,8 @@ The template allows for the complete control and management of the Carla simulat
 - If the script does not automatically start the server, you need to start the server manually.
 
 4. Run training/testing scripts.
+
+- Try out the framework by running `python main.py`. If you want to check out the ego vehicle moving around the map, set the autopilot variable to True in the gym.make() function in the main.py file. You should be seeing the ego vehicle moving around the map. 
 
 ---
 
@@ -98,6 +111,7 @@ There are countless options for configuring the simulation and the gym environme
 - The simulator may crash after a certain amount of episodes. This is a known issue with Carla and is not a problem with the template. The problem happens because the CARLA server runs out of memory. This issue is reported [here](https://github.com/carla-simulator/carla/issues/3197). However, i've implemented a workaround that reloads the map every n episodes, this is the `self.__restart_every` variable in the `CarlaEnv` class. This is not a definitive solution, as it requires the CARLA devs to fix the root of the problem, but it helps to mitigate it;
 - If the simulator is ran in low quality mode, it crashes the program, this is a problem in Carla's side and it's known by the community. Issue reported [here](https://github.com/carla-simulator/carla/issues/6399);
 - Moving the walkers causes segmentation fault. This is a known problem with the simulator between the community [here](https://github.com/carla-simulator/carla/issues/4155);
+- If you have `Out of video memory trying to allocate a rendering resource` error please run the simulator with dx11, as such: `./CarlaUE4.sh -dx11` or `CarlaUE4.exe -dx11`.
 
 ---
 ## Helpful Scripts
