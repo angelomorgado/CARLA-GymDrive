@@ -73,6 +73,9 @@ class CarlaEnv(gym.Env):
         if self.__automatic_server_initialization:
             self.__server_process = CarlaServer.initialize_server(low_quality = config.SIM_LOW_QUALITY, offscreen_rendering = config.SIM_OFFSCREEN_RENDERING)
         
+        if config.SIM_OFFSCREEN_RENDERING:
+            self.__show_sensor_data = False
+        
         # 2. Connect to the server
         self.__world = World(synchronous_mode=self.__synchronous_mode)
 
