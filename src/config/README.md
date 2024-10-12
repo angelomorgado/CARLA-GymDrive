@@ -24,7 +24,6 @@ The configuration options are:
 - `SIM_TIMEOUT`: The timeout of the simulation
 - `SIM_LOW_QUALITY`: If True, it runs the simulation in low quality
 - `SIM_OFFSCREEN_RENDERING`: If True, it runs the simulation in offscreen rendering
-- `SIM_DELTA_SECONDS`: The delta seconds of the simulation
 - `SIM_FPS`: The FPS of the simulation
 - `ENV_SCENARIOS_FILE`: The path to the JSON file with the scenarios configuration
 - `ENV_MAX_STEPS`: The maximum number of steps per episode
