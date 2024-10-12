@@ -6,7 +6,7 @@
     "initial_rotation": {"pitch": 0.0, "yaw": 180.0, "roll": 0.0},
 		"target_position": {"x": 128.2, "y": 195.3, "z": 0.3},
     "target_gnss": {"lat": -0.001754, "lon": 0.001143, "alt": 0},
-    "traffic_density": "None",
+    "traffic_density": "High",
     "situation": "Road"
   },
   "Town01-WetNight-Road-0": {
@@ -36,7 +36,7 @@
     "initial_rotation": {"pitch": 0.0, "yaw": -90.0, "roll": 0.0},
     "target_position": {"x": 37.7, "y": 2.1, "z": 0.3},
     "target_gnss": {"lat": -0.000019, "lon": 0.000348, "alt": 0},
-    "traffic_density": "None",
+    "traffic_density": "Low",
     "situation": "Road"
   },
   "Town01-ClearNoon-Road-3": {
@@ -56,7 +56,7 @@
     "initial_rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
     "target_position": {"x": 128.1, "y": 330.8, "z": 0.3},
     "target_gnss": {"lat": -0.002972, "lon": 0.001160, "alt": 0},
-    "traffic_density": "Low",
+    "traffic_density": "High",
     "situation": "Junction"
   },
   "Town10HD-ClearNoon-Road-0": {
@@ -86,7 +86,7 @@
     "initial_rotation": {"pitch": 0.0, "yaw": 90.0, "roll": 0.0},
     "target_position": {"x": 99.4, "y": 49.3, "z": 0.3},
     "target_gnss": {"lat": -0.000452, "lon": 0.000891, "alt": 0},
-    "traffic_density": "None",
+    "traffic_density": "High",
     "situation": "Junction"
   },
   "Town10HD-ClearNoon-Junction-2": {
