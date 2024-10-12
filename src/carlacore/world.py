@@ -30,17 +30,8 @@ class World:
         self.__map = self.__map_control.get_map()
         
         self.__synchronous_mode = synchronous_mode
-        self.__no_rendering_mode = config.SIM_NO_RENDERING
-        self.__fixed_delta_seconds = 0.0
-
-        if self.__synchronous_mode:
-            self.__fixed_delta_seconds = config.SIM_DELTA_SECONDS
-
-        self.__settings = self.__world.get_settings()
-        self.__settings.synchronous_mode = self.__synchronous_mode
-        self.__settings.no_rendering_mode = self.__no_rendering_mode
-        self.__settings.fixed_delta_seconds = self.__fixed_delta_seconds
-        self.__world.apply_settings(self.__settings)
+        self.set_settings()
+        
         if config.VERBOSE:
             print("World initialized!")
 
@@ -103,6 +94,19 @@ class World:
     
     def reload_map(self):
         self.__map_control.reload_map()
+    
+    # ============ Settings Control ============
+    def set_settings(self):
+        settings = self.__world.get_settings()
+        settings.synchronous_mode = self.__synchronous_mode
+        if self.__synchronous_mode:
+            settings.fixed_delta_seconds = 1.0 / config.SIM_FPS
+        else:
+            settings.fixed_delta_seconds = None
+        settings.no_rendering_mode = config.SIM_NO_RENDERING
+        self.__world.apply_settings(settings)
+        if config.VERBOSE:
+            print("Settings applied!")
     
     # ============ Traffic Control ============
     def spawn_vehicles(self, num_vehicles = 10, autopilot_on = False):

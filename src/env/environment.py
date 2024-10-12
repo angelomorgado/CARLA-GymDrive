@@ -286,6 +286,9 @@ class CarlaEnv(gym.Env):
         if self.__verbose:
             print("World loaded!")
         
+        # Settings
+        self.__world.set_settings()
+        
         # Weather
         self.__load_weather(scenario_dict['weather_condition'])
         if self.__verbose:
@@ -312,6 +315,9 @@ class CarlaEnv(gym.Env):
             if self.__verbose:
                 print("Traffic spawned!")
         self.__toggle_lights()
+        
+        # Tick the world to make sure everything is loaded
+        self.__world.tick()
 
     def clean_scenario(self):
         self.__vehicle.destroy_vehicle()
