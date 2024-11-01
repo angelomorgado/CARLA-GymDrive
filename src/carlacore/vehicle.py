@@ -226,8 +226,9 @@ class Vehicle:
 
     # ====================================== Vehicle Control ======================================
     # Control the vehicle based on the continuous action space provided by the environment. The action space is [steering_angle,throttle/brake], both between [-1, 1]
-    def control_vehicle(self, action):                
-        self.__control.steer = max(-1.0, min(float(action[0]), 1.0))
+    def control_vehicle(self, action):             
+        self.__steering_angle = max(-1.0, min(float(action[0]), 1.0))   
+        self.__control.steer = self.__steering_angle
         if action[1] >= 0:
             self.__throttle = min(float(action[1]), 1.0)
             self.__brake = 0.0
